@@ -18,7 +18,7 @@ grep -q "Copyright 2026 OhhO Robotics" LICENSE || fail "LICENSE copyright line c
 [[ -f README.md ]] || fail "README.md is missing"
 grep -q "Concept — not started." README.md || fail "README is missing the concept status"
 grep -q "https://github.com/ohho-robotics/OmniBot" README.md || fail "README is missing the OmniBot link"
-grep -q "git clone https://github.com/ohho-robotics/ohho-quadrupud.git" README.md || fail "README clone URL is wrong"
+grep -q "git clone https://github.com/ohho-robotics/ohho-quadruped.git" README.md || fail "README clone URL is wrong"
 grep -q "Apache License 2.0" README.md || fail "README license line does not match LICENSE"
 
 [[ ! -e docker-compose.yml ]] || fail "docker-compose.yml must not return"
@@ -49,11 +49,11 @@ commands="$(awk '
   /^```$/ { capture=0; next }
   capture && NF { print }
 ' README.md)"
-expected="git clone https://github.com/ohho-robotics/ohho-quadrupud.git"
+expected="git clone https://github.com/ohho-robotics/ohho-quadruped.git"
 [[ "$commands" == "$expected" ]] || fail "unexpected command in README: ${commands:-<none>}"
 
 echo "clone URL resolves:"
-ref="$(git ls-remote --heads https://github.com/ohho-robotics/ohho-quadrupud.git refs/heads/main)"
+ref="$(git ls-remote --heads https://github.com/ohho-robotics/ohho-quadruped.git refs/heads/main)"
 [[ -n "$ref" ]] || fail "clone URL did not resolve refs/heads/main"
 echo "$ref"
 
