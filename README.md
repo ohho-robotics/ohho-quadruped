@@ -9,7 +9,7 @@ This repository is a placeholder for a quadruped form factor in the [OhhO Roboti
 ## Clone
 
 ```bash
-git clone https://github.com/ohho-robotics/ohho-quadrupud.git
+git clone https://github.com/ohho-robotics/ohho-quadruped.git
 ```
 
 There is no install step. Nothing in this tree builds or launches a robot.
