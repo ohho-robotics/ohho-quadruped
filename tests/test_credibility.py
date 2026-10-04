@@ -316,6 +316,37 @@ class TestBannedTerms(unittest.TestCase):
 
 
 class TestRestrictedTerms(unittest.TestCase):
+
+    def test_subsection_table_fails(self):
+        from tempfile import TemporaryDirectory
+        with TemporaryDirectory() as tmp:
+            readme = VALID_README.replace(
+                "| Vision item | Vision | planned |",
+                "| Vision item | Vision | planned |\n### Notes\n| Unitree Go2 | walks |"
+            )
+            root = make_repo(Path(tmp), readme=readme)
+            self.assertEqual(run_check(cc.check_restricted_readme_terms, root), 1)
+
+    def test_sim_section_with_subsection_passes(self):
+        from tempfile import TemporaryDirectory
+        with TemporaryDirectory() as tmp:
+            readme = VALID_README.replace(
+                "Nothing here has been tested on hardware.",
+                "Nothing here has been tested on hardware.\n### Detail\nMuJoCo scene planned"
+            )
+            root = make_repo(Path(tmp), readme=readme)
+            self.assertIsNone(run_check(cc.check_restricted_readme_terms, root))
+
+    def test_sim_section_followed_by_other_section_fails(self):
+        from tempfile import TemporaryDirectory
+        with TemporaryDirectory() as tmp:
+            readme = VALID_README.replace(
+                "Nothing here has been tested on hardware.",
+                "Nothing here has been tested on hardware.\n## Other\nMuJoCo works"
+            )
+            root = make_repo(Path(tmp), readme=readme)
+            self.assertEqual(run_check(cc.check_restricted_readme_terms, root), 1)
+
     def test_unitree_outside_table_fails(self):
         from tempfile import TemporaryDirectory
         with TemporaryDirectory() as tmp:
