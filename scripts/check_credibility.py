@@ -303,9 +303,8 @@ def check_status_table(root: Path) -> None:
     if not rows:
         fail("README ## Status section has no table rows")
 
-    # Remove header row (first row, which has column names)
-    data_rows = [r for r in rows if not re.search(r"\bItem\b|\bStatus\b|\bEvidence\b", r)
-                 or re.search(r"Built|In progress|Vision", r)]
+    # Remove header row (first row, structurally)
+    data_rows = rows[1:] if len(rows) > 1 else []
 
     for row in data_rows:
         # Extract the Status cell — second pipe-delimited cell

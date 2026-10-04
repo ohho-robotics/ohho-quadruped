@@ -271,6 +271,16 @@ class TestStatusTable(unittest.TestCase):
             self.assertEqual(run_check(cc.check_status_table, root), 1)
 
 
+    def test_status_row_with_status_word_and_invalid_value_fails(self):
+        from tempfile import TemporaryDirectory
+        with TemporaryDirectory() as tmp:
+            readme = VALID_README.replace(
+                "| Vision item | Vision | planned |",
+                "| Status page | Shipped | x |",
+            )
+            root = make_repo(Path(tmp), readme=readme)
+            self.assertEqual(run_check(cc.check_status_table, root), 1)
+
 class TestBannedTerms(unittest.TestCase):
     def _check_banned(self, term: str) -> int | None:
         from tempfile import TemporaryDirectory
