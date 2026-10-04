@@ -30,34 +30,34 @@ Hardware bring-up is gated on a physical Go2 EDU and an operator being present (
 
 ## Clone
 
-\\ash
+```bash
 git clone https://github.com/ohho-robotics/ohho-quadruped.git
-\\
+```
 
 ## Checks
 
-\\ash
+```bash
 python -m unittest discover -s tests
-\\
+```
 
-\\ash
+```bash
 ruff check .
-\\
+```
 
-\\ash
+```bash
 bash scripts/check-credibility.sh
-\\
+```
 
 ## Layout
 
-\\
+```text
 ohho_go2/          Python package: sport shim + sim helpers (planned, November 2026)
 sim/               unitree_mujoco launch + scenes (planned, November 2026)
 ros2_ws/src/ohho_go2_bridge/   ROS 2 Humble bridge (planned, early 2027)
 docs/              ADRs and runbooks (ADR 0001 in PR #3)
 scripts/           Credibility check v2
 tests/             stdlib unittest tests
-\\
+```
 
 ## License
 
