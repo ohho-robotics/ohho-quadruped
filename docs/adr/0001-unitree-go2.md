@@ -119,8 +119,11 @@ and enforces the following:
 
 ## Consequences
 
-* Development is blocked on acquiring an NVIDIA RTX GPU (for training the sim
-  shim policy) or adopting a fallback solution.
+* No GPU does not block development: M1 (SDK backend, SafetyGate) proceeds on
+  CPU against mock DDS and the kinematic sim:// backend. The main risk is
+  training the Go2 locomotion policy for the sport shim (OHH-122), which needs
+  an NVIDIA GPU; if Varun's PC has none (OHH-114), fall back to a rented/cloud
+  GPU, mjlab, or a licence-checked community checkpoint, decided early.
 * Development of real-world functionality is gated on the physical presence of
   the operator, meaning automated CI cannot test real hardware.
 * We accept the overhead of maintaining the `ohho-sdk` / `ohho-quadruped` split,
