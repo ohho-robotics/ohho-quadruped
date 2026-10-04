@@ -193,8 +193,9 @@ class TestStatusTable(unittest.TestCase):
     def test_clone_line_not_in_fence_fails(self):
         from tempfile import TemporaryDirectory
         with TemporaryDirectory() as tmp:
-            readme = VALID_README.replace("git clone https://github.com/ohho-robotics/ohho-quadruped.git", "")
-            readme += "\ngit clone https://github.com/ohho-robotics/ohho-quadruped.git\n"
+            old_clone = "git clone https://github.com/ohho-robotics/ohho-quadruped.git"
+            readme = VALID_README.replace(old_clone, "")
+            readme += "\n" + old_clone + "\n"
             root = make_repo(Path(tmp), readme=readme)
             self.assertEqual(run_check(cc.check_readme_basics, root), 1)
 
