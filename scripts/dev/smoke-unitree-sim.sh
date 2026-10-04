@@ -66,8 +66,9 @@ echo "== running test/test_unitree_sdk2.py for ${LISTEN_SECONDS}s"
 
 # The two subscriber callbacks print from different threads, so lines can interleave;
 # count the markers anywhere on a line.
-LOW=$(grep -o 'IMU state:' "$SUB_LOG" | wc -l)
-HIGH=$(grep -o 'Position:' "$SUB_LOG" | wc -l)
+# grep exits 1 on no match; keep that from tripping set -e/pipefail so the FAIL branch runs.
+LOW=$({ grep -o 'IMU state:' "$SUB_LOG" || true; } | wc -l)
+HIGH=$({ grep -o 'Position:' "$SUB_LOG" || true; } | wc -l)
 echo "== LowState (rt/lowstate) messages: $LOW"
 grep -m 1 'IMUState_(' "$SUB_LOG" | cut -c1-500 || true
 echo "== SportModeState (rt/sportmodestate) messages: $HIGH"

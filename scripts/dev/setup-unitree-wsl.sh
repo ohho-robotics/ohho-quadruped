@@ -51,15 +51,19 @@ if [ -r /etc/os-release ]; then
   fi
 fi
 
-# Clone $1 into $2 (if missing) and check out commit $3. Fails if the checkout has local changes
-# other than the ones this script makes itself.
+# Clone $1 into $2 (if missing) and check out commit $3. Optional $4 is a repo-relative file that
+# this script edits after checkout; it is restored before moving to a new pin so a pin bump is not
+# blocked by our own edit. Any other local change makes the checkout fail rather than be discarded.
 clone_pinned() {
-  local repo="$1" dir="$2" ref="$3"
+  local repo="$1" dir="$2" ref="$3" own_edit="${4:-}"
   if [ ! -d "$dir/.git" ]; then
     git clone --quiet "$repo" "$dir"
   fi
   if [ "$(git -C "$dir" rev-parse HEAD)" != "$ref" ]; then
     git -C "$dir" fetch --quiet origin
+    if [ -n "$own_edit" ]; then
+      git -C "$dir" checkout --quiet -- "$own_edit"
+    fi
     git -C "$dir" checkout --quiet --detach "$ref"
   fi
   echo "$(basename "$dir") @ $(git -C "$dir" rev-parse --short HEAD)"
@@ -112,7 +116,7 @@ log "mujoco ${MUJOCO_PY_VERSION} + pygame ${PYGAME_VERSION}"
 "$PY" -m pip install --quiet "mujoco==${MUJOCO_PY_VERSION}" "pygame==${PYGAME_VERSION}"
 
 log "unitree_mujoco (pinned) + Go2 / domain 1 / lo / no joystick config"
-clone_pinned "$MUJOCO_SIM_REPO" "$UNITREE_WS/unitree_mujoco" "$MUJOCO_SIM_REF"
+clone_pinned "$MUJOCO_SIM_REPO" "$UNITREE_WS/unitree_mujoco" "$MUJOCO_SIM_REF" simulate_python/config.py
 SIM_CFG="$UNITREE_WS/unitree_mujoco/simulate_python/config.py"
 sed -i -E \
   -e 's/^ROBOT = "[a-z0-9]+"/ROBOT = "go2"/' \
