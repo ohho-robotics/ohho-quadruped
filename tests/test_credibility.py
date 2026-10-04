@@ -391,6 +391,34 @@ class TestClaims(unittest.TestCase):
             })
             self.assertEqual(run_check(cc.check_claims, root), 1)
 
+    def test_claims_guard_negation_inside_word_fails(self):
+        from tempfile import TemporaryDirectory
+        with TemporaryDirectory() as tmp:
+            readme = VALID_README + "\nNotably, the Go2 works on hardware.\n"
+            root = make_repo(Path(tmp), readme=readme)
+            self.assertEqual(run_check(cc.check_claims, root), 1)
+
+    def test_claims_guard_negation_another_fails(self):
+        from tempfile import TemporaryDirectory
+        with TemporaryDirectory() as tmp:
+            readme = VALID_README + "\nAnother controller is production-ready.\n"
+            root = make_repo(Path(tmp), readme=readme)
+            self.assertEqual(run_check(cc.check_claims, root), 1)
+
+    def test_claims_guard_negation_whole_word_not_passes(self):
+        from tempfile import TemporaryDirectory
+        with TemporaryDirectory() as tmp:
+            readme = VALID_README + "\nNot hardware-tested yet (planned).\n"
+            root = make_repo(Path(tmp), readme=readme)
+            self.assertIsNone(run_check(cc.check_claims, root))
+
+    def test_claims_guard_sim_only_phrase_passes(self):
+        from tempfile import TemporaryDirectory
+        with TemporaryDirectory() as tmp:
+            readme = VALID_README + "\nSim only, not hardware-tested\n"
+            root = make_repo(Path(tmp), readme=readme)
+            self.assertIsNone(run_check(cc.check_claims, root))
+
     def test_negated_claim_in_docs_passes(self):
         from tempfile import TemporaryDirectory
         with TemporaryDirectory() as tmp:

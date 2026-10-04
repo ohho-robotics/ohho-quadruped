@@ -72,7 +72,11 @@ CLAIM_PHRASES: list[str] = [
 # Negation/planning markers that exempt a line from the claims guard.
 CLAIM_NEGATION_MARKERS: list[str] = [
     "not",
-    "no ",
+    "no",
+    "nothing",
+    "isn't",
+    "doesn't",
+    "hasn't",
     "never",
     "planned",
     "proposed",
@@ -433,9 +437,11 @@ def check_claims(root: Path) -> None:
             for phrase in CLAIM_PHRASES:
                 if phrase.lower() in line_lower:
                     # Check for negation marker
-                    has_negation = any(
-                        marker.lower() in line_lower for marker in CLAIM_NEGATION_MARKERS
-                    )
+                    has_negation = False
+                    for marker in CLAIM_NEGATION_MARKERS:
+                        if re.search(r"\\b" + re.escape(marker) + r"\\b", line, re.IGNORECASE):
+                            has_negation = True
+                            break
                     if not has_negation:
                         fail(
                             f"{rel}:{lineno}: working-capability claim phrase "
