@@ -190,6 +190,21 @@ class TestStatusTable(unittest.TestCase):
             root = make_repo(Path(tmp))
             self.assertIsNone(run_check(cc.check_status_table, root))
 
+    def test_clone_line_not_in_fence_fails(self):
+        from tempfile import TemporaryDirectory
+        with TemporaryDirectory() as tmp:
+            readme = VALID_README.replace("git clone https://github.com/ohho-robotics/ohho-quadruped.git", "")
+            readme += "\ngit clone https://github.com/ohho-robotics/ohho-quadruped.git\n"
+            root = make_repo(Path(tmp), readme=readme)
+            self.assertEqual(run_check(cc.check_readme_basics, root), 1)
+
+    def test_no_fenced_blocks_fails(self):
+        from tempfile import TemporaryDirectory
+        with TemporaryDirectory() as tmp:
+            readme = VALID_README.replace("```bash", "").replace("```", "")
+            root = make_repo(Path(tmp), readme=readme)
+            self.assertEqual(run_check(cc.check_readme_basics, root), 1)
+
     def test_no_status_section_fails(self):
         from tempfile import TemporaryDirectory
         with TemporaryDirectory() as tmp:

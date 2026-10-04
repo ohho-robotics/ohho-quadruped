@@ -274,8 +274,15 @@ def check_readme_basics(root: Path) -> None:
     text = readme.read_text(encoding="utf-8")
     if "https://github.com/ohho-robotics/OmniBot" not in text:
         fail("README is missing the OmniBot link")
-    if "git clone https://github.com/ohho-robotics/ohho-quadruped.git" not in text:
-        fail("README clone URL is wrong")
+    
+    commands = find_fenced_commands(text)
+    if not commands:
+        fail("README has no fenced command blocks")
+        
+    clone_cmd = "git clone https://github.com/ohho-robotics/ohho-quadruped.git"
+    if clone_cmd not in commands:
+        fail("README clone URL is wrong or not in a fenced bash/sh block")
+
     if "Apache License 2.0" not in text:
         fail("README license line does not match LICENSE")
 
