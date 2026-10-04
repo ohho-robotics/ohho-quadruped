@@ -1,0 +1,25 @@
+[project]
+name = "ohho-go2"
+version = "0.0.0"
+description = "Planned: sport shim and sim helpers for the Unitree Go2 in the OhhO Robotics stack."
+readme = "ohho_go2/README.md"
+requires-python = ">=3.10"
+license = { text = "Apache-2.0" }
+# No runtime dependencies yet — nothing is implemented.
+# unitree_sdk2py and DDS deps will be added in M1/M2 (November 2026).
+dependencies = []
+
+[project.urls]
+Repository = "https://github.com/ohho-robotics/ohho-quadruped"
+
+[build-system]
+requires = ["setuptools>=69"]
+build-backend = "setuptools.backends.legacy:build"
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "UP"]
+ignore = []
