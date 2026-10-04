@@ -360,6 +360,28 @@ class TestRestrictedTerms(unittest.TestCase):
             root = make_repo(Path(tmp), readme=readme)
             self.assertEqual(run_check(cc.check_restricted_readme_terms, root), 1)
 
+    def test_caption_immediately_after_table_fails(self):
+        from tempfile import TemporaryDirectory
+        with TemporaryDirectory() as tmp:
+            # Status table followed immediately by a caption (no blank line)
+            readme = VALID_README.replace(
+                "| Vision item | Vision | planned |",
+                "| Vision item | Vision | planned |\nUnitree Go2 demo video"
+            )
+            root = make_repo(Path(tmp), readme=readme)
+            self.assertEqual(run_check(cc.check_restricted_readme_terms, root), 1)
+
+    def test_heading_immediately_after_table_fails(self):
+        from tempfile import TemporaryDirectory
+        with TemporaryDirectory() as tmp:
+            # Status table followed immediately by a heading (no blank line)
+            readme = VALID_README.replace(
+                "| Vision item | Vision | planned |",
+                "| Vision item | Vision | planned |\n## Hardware\nUnitree Go2 walks"
+            )
+            root = make_repo(Path(tmp), readme=readme)
+            self.assertEqual(run_check(cc.check_restricted_readme_terms, root), 1)
+
 
 class TestFencedCommandsInCI(unittest.TestCase):
     def test_readme_command_not_in_ci_fails(self):

@@ -186,12 +186,13 @@ def extract_status_table_rows(readme_text: str) -> list[str]:
     in_table = False
     for line in readme_text.splitlines():
         stripped = line.strip()
+        m_heading = re.match(r"^(#+)", stripped)
         if re.match(r"^##\s+Status\s*$", stripped):
             in_status = True
             continue
         if in_status:
-            if re.match(r"^##", stripped) and not re.match(r"^##\s+Status", stripped):
-                break  # next section
+            if m_heading and len(m_heading.group(1)) <= 2:
+                break  # next section of same or higher level
             if stripped.startswith("|"):
                 in_table = True
                 # Skip header and separator rows
@@ -200,8 +201,8 @@ def extract_status_table_rows(readme_text: str) -> list[str]:
                 # Check if it's a header row (contains "Status" column header typically)
                 # We'll collect all pipe rows except pure separator
                 rows.append(stripped)
-            elif in_table and not stripped:
-                break  # blank line ends table
+            elif in_table:
+                break  # ANY non-table line ends table
     return rows
 
 
@@ -209,13 +210,16 @@ def extract_sim_section_lines(readme_text: str) -> list[str]:
     """Return lines that are inside a section headed 'Sim only, not hardware-tested'."""
     lines_out: list[str] = []
     in_section = False
+    section_level = 0
     for line in readme_text.splitlines():
         stripped = line.strip()
-        if re.match(r"^#+\s+.*[Ss]im only.*not hardware-tested", stripped):
+        m_heading = re.match(r"^(#+)", stripped)
+        if m_heading and re.search(r"[Ss]im only.*not hardware-tested", stripped):
             in_section = True
+            section_level = len(m_heading.group(1))
             continue
         if in_section:
-            if re.match(r"^#+", stripped):
+            if m_heading and len(m_heading.group(1)) <= section_level:
                 break
             lines_out.append(line)
     return lines_out
@@ -359,29 +363,34 @@ def check_restricted_readme_terms(root: Path) -> None:
     in_status = False
     in_status_table = False
     in_sim_section = False
+    sim_section_level = 0
 
     for lineno, line in enumerate(text.splitlines(), 1):
         stripped = line.strip()
 
-        # Track Status section and table
-        if re.match(r"^##\s+Status\s*$", stripped):
-            in_status = True
-            in_status_table = False
-            in_sim_section = False
-        elif re.match(r"^#+\s+.*[Ss]im only.*not hardware-tested", stripped):
-            in_sim_section = True
-            in_status = False
-            in_status_table = False
-        elif re.match(r"^#+", stripped):
-            if in_status:
-                in_status = False
-            if in_sim_section:
+        m_heading = re.match(r"^(#+)", stripped)
+        if m_heading:
+            level = len(m_heading.group(1))
+            if re.match(r"^##\s+Status\s*$", stripped):
+                in_status = True
+                in_status_table = False
                 in_sim_section = False
+            elif re.search(r"^[#]+\s+.*[Ss]im only.*not hardware-tested", stripped):
+                in_sim_section = True
+                sim_section_level = level
+                in_status = False
+                in_status_table = False
+            else:
+                if in_status and level <= 2:
+                    in_status = False
+                    in_status_table = False
+                if in_sim_section and level <= sim_section_level:
+                    in_sim_section = False
 
         if in_status:
             if stripped.startswith("|"):
                 in_status_table = True
-            elif in_status_table and not stripped:
+            elif in_status_table:
                 in_status_table = False
 
         for term in RESTRICTED_README_TERMS:
