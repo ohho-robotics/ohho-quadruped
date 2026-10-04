@@ -9,5 +9,16 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: No failing commands or live capability claims
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Clone URL check (exercises README clone command)
+        run: git clone https://github.com/ohho-robotics/ohho-quadruped.git /tmp/ohho-quadruped-clone
+      - name: Install ruff
+        run: python -m pip install ruff
+      - name: Lint (exercises README ruff check command)
+        run: ruff check .
+      - name: Unit tests (exercises README unittest command)
+        run: python -m unittest discover -s tests
+      - name: Credibility check v2
         run: bash scripts/check-credibility.sh
