@@ -73,11 +73,11 @@ CLAIM_PHRASES: list[str] = [
 CLAIM_NEGATION_MARKERS: list[str] = [
     "not",
     "no",
+    "never",
     "nothing",
     "isn't",
     "doesn't",
     "hasn't",
-    "never",
     "planned",
     "proposed",
     "vision",
@@ -356,33 +356,41 @@ def check_restricted_readme_terms(root: Path) -> None:
     readme = root / "README.md"
     text = readme.read_text(encoding="utf-8")
 
-    table_rows = extract_status_table_rows(text)
-    table_text = "\n".join(table_rows)
+    in_status = False
+    in_status_table = False
+    in_sim_section = False
 
-    sim_section_lines = extract_sim_section_lines(text)
-    sim_section_text = "\n".join(sim_section_lines)
+    for lineno, line in enumerate(text.splitlines(), 1):
+        stripped = line.strip()
 
-    for term in RESTRICTED_README_TERMS:
-        pattern = re.escape(term)
-        for lineno, line in enumerate(text.splitlines(), 1):
-            if re.search(pattern, line):
-                # Is this line in the table?
-                if re.search(pattern, table_text) and line.strip() in [
-                    r.strip() for r in table_rows
-                ]:
-                    continue
-                # Is this line in the sim section?
-                if line in sim_section_lines:
-                    continue
-                # Check if the line is actually a table row (starts with |)
-                if line.strip().startswith("|") and re.search(pattern, table_text):
-                    continue
-                # Check if it's inside the sim section
-                if re.search(pattern, sim_section_text) and line in sim_section_lines:
+        # Track Status section and table
+        if re.match(r"^##\s+Status\s*$", stripped):
+            in_status = True
+            in_status_table = False
+            in_sim_section = False
+        elif re.match(r"^#+\s+.*[Ss]im only.*not hardware-tested", stripped):
+            in_sim_section = True
+            in_status = False
+            in_status_table = False
+        elif re.match(r"^#+", stripped):
+            if in_status:
+                in_status = False
+            if in_sim_section:
+                in_sim_section = False
+
+        if in_status:
+            if stripped.startswith("|"):
+                in_status_table = True
+            elif in_status_table and not stripped:
+                in_status_table = False
+
+        for term in RESTRICTED_README_TERMS:
+            if term in line:
+                if in_status_table or in_sim_section:
                     continue
                 fail(
                     f"README line {lineno}: {term!r} appears outside the status "
-                    f"table or 'Sim only, not hardware-tested' section: {line.strip()!r}"
+                    f"table or 'Sim only, not hardware-tested' section: {stripped!r}"
                 )
 
 
@@ -438,7 +446,7 @@ def check_claims(root: Path) -> None:
                     # Check for negation marker
                     has_negation = False
                     for marker in CLAIM_NEGATION_MARKERS:
-                        if re.search(r"\\b" + re.escape(marker) + r"\\b", line, re.IGNORECASE):
+                        if re.search(r"\b" + re.escape(marker) + r"\b", line, re.IGNORECASE):
                             has_negation = True
                             break
                     if not has_negation:

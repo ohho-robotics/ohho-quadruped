@@ -270,7 +270,6 @@ class TestStatusTable(unittest.TestCase):
             root = make_repo(Path(tmp), readme=readme)
             self.assertEqual(run_check(cc.check_status_table, root), 1)
 
-
     def test_status_row_with_status_word_and_invalid_value_fails(self):
         from tempfile import TemporaryDirectory
         with TemporaryDirectory() as tmp:
@@ -344,6 +343,22 @@ class TestRestrictedTerms(unittest.TestCase):
             )
             root = make_repo(Path(tmp), readme=readme)
             self.assertIsNone(run_check(cc.check_restricted_readme_terms, root))
+
+    def test_unitree_in_other_table_fails(self):
+        from tempfile import TemporaryDirectory
+        with TemporaryDirectory() as tmp:
+            readme = VALID_README.replace(
+                "| Vision item | Vision | planned |",
+                "| Unitree Go2 sim | Vision | planned |",
+            ) + textwrap.dedent("""\
+                ## Hardware
+
+                | Robot | Status |
+                |---|---|
+                | Unitree Go2 | walking |
+            """)
+            root = make_repo(Path(tmp), readme=readme)
+            self.assertEqual(run_check(cc.check_restricted_readme_terms, root), 1)
 
 
 class TestFencedCommandsInCI(unittest.TestCase):
