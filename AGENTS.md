@@ -124,7 +124,7 @@ call, or suggest code that uses them:
 - `Damp()` only if the robot is already lying down, or `--estop-damp` is set
   (damping while standing drops the robot).
 - Released **only** by an explicit `release_stop()` from a human-facing client.
-- Agents and policies are never allowed to call e-stop or release it.
+- Agents and policies are never allowed to call `release_stop()` (releasing the latch is human-only).
 
 ### Allowlist
 
