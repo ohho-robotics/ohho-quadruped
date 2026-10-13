@@ -31,3 +31,6 @@ htmlcov/
 # OS
 .DS_Store
 Thumbs.db
+
+# Local upstream clones for dev / agent sessions (not committed)
+.tmp-unitree_mujoco/

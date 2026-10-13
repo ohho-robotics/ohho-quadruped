@@ -52,7 +52,7 @@ bash scripts/check-credibility.sh
 
 ```text
 ohho_go2/          Python package: sport shim + sim helpers (planned, November 2026)
-sim/               unitree_mujoco launch + scenes (planned, November 2026)
+sim/               Go2 MuJoCo launcher + OhhO scenes (see sim/README.md)
 ros2_ws/src/ohho_go2_bridge/   ROS 2 Humble bridge (planned, early 2027)
 docs/              ADRs and runbooks (ADR 0001 in PR #3)
 scripts/           Credibility check v2
