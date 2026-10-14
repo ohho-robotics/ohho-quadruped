@@ -16,10 +16,18 @@ https://github.com/ohho-robotics/ohho-quadruped/pull/3
 Do **not** create or edit anything under `docs/adr/` on this branch — that
 directory is owned by PR #3 to avoid add/add conflicts.
 
-## Runbooks (planned)
+## Runbooks
 
-Runbooks for sim setup, hardware arming, and safety procedures will be added
-as each milestone is completed (M1 onward, November 2026).
+**Needs Varun: physically present, Go2 EDU access (OHH-135).**
+
+| Runbook | What it is |
+|---|---|
+| [Go2 bring-up](runbooks/go2-bringup.md) | Six-step read-only procedure. Written in advance. Not executed. No motion. |
+| [Evidence template](runbooks/go2-bringup-evidence-template.md) | Blank sheet for that procedure. Measured cells stay empty in git. |
+
+`python scripts/check_bringup_runbook.py` checks those two files offline
+(no DDS import, no socket). Further runbooks (sim setup, later motion)
+are still planned for M1 onward, November 2026.
 
 ## Notes
 
