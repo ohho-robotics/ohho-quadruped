@@ -2,10 +2,21 @@
 
 from __future__ import annotations
 
+import importlib.util
 import os
 import sys
 import unittest
 from pathlib import Path
+
+if importlib.util.find_spec("mujoco") is None:
+    import pytest
+
+    try:
+        pytest.importorskip("mujoco")
+    except BaseException as exc:
+        if type(exc).__name__ != "Skipped":
+            raise
+        raise unittest.SkipTest(str(exc)) from exc
 
 _REPO = Path(__file__).resolve().parent.parent
 if str(_REPO) not in sys.path:
