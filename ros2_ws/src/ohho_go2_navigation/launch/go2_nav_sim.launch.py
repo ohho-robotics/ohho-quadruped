@@ -137,7 +137,8 @@ def generate_launch_description() -> LaunchDescription:
         parameters=[
             {
                 "use_mock_transport": True,
-                "publish_sim_sensors": ParameterValue(use_mock_sim, value_type=bool),
+                # Mock kinematic sensors (CI / headless); MuJoCo path not wired yet.
+                "publish_sim_sensors": True,
                 "sim_sensor_rate_hz": 20.0,
                 "watchdog_timeout_sec": 0.3,
                 "use_sim_time": ParameterValue(use_sim_time, value_type=bool),

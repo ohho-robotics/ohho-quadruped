@@ -10,6 +10,7 @@
 set -euo pipefail
 
 export ROS_DOMAIN_ID=1
+export ROS_LOCALHOST_ONLY=1
 
 echo "==> Sourcing ROS 2 and workspace setup"
 if [ -f /opt/ros/humble/setup.bash ]; then
