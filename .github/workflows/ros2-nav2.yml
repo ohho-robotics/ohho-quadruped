@@ -13,7 +13,7 @@ jobs:
       ROS_DOMAIN_ID: "1"
     steps:
       - uses: actions/checkout@v4
-      - name: Install workspace ROS dependencies (rosdep)
+      - name: Install workspace ROS dependencies
         shell: bash
         run: bash scripts/ci/install-humble-ws-deps-container.sh
       - name: Build packages (Humble)

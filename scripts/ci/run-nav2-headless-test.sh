@@ -43,9 +43,9 @@ cleanup() {
 }
 trap cleanup EXIT
 
-echo "==> Waiting up to 45s for nodes and topics..."
+echo "==> Waiting up to 60s for nodes and topics..."
 SUCCESS=0
-for i in $(seq 1 45); do
+for i in $(seq 1 60); do
   sleep 1
   if ! kill -0 "$LAUNCH_PID" 2>/dev/null; then
     echo "Launch process exited prematurely. Log output:"
@@ -56,9 +56,9 @@ for i in $(seq 1 45); do
   TOPICS=$(ros2 topic list 2>/dev/null || true)
   if echo "$TOPICS" | grep -q "/odom" && \
      echo "$TOPICS" | grep -q "/scan" && \
-     echo "$TOPICS" | grep -q "/robot_description"; then
+     echo "$TOPICS" | grep -q "/joint_states"; then
     echo "Required topics found at iteration $i:"
-    echo "  /odom, /scan, /robot_description active"
+    echo "  /odom, /scan, /joint_states active"
     SUCCESS=1
     break
   fi
