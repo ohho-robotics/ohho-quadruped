@@ -1,0 +1,36 @@
+name: ros2-nav2
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  nav2-headless-launch-test:
+    runs-on: ubuntu-22.04
+    env:
+      ROS_DOMAIN_ID: "1"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ros-tooling/setup-ros@v0.7
+        with:
+          required-ros-distributions: humble
+      - name: Install ROS 2 Navigation & SLAM dependencies
+        shell: bash
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq \
+            ros-humble-navigation2 \
+            ros-humble-nav2-bringup \
+            ros-humble-slam-toolbox \
+            ros-humble-robot-state-publisher \
+            ros-humble-joint-state-publisher
+      - name: Build packages (Humble)
+        shell: bash
+        run: |
+          source /opt/ros/humble/setup.bash
+          cd ros2_ws
+          colcon build --packages-select go2_description ohho_go2_bridge ohho_go2_navigation
+      - name: Headless launch-test (~60s)
+        shell: bash
+        run: |
+          bash scripts/ci/run-nav2-headless-test.sh
