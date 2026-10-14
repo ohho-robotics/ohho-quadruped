@@ -1,7 +1,8 @@
 """
-Launch robot_state_publisher and RViz for Unitree Go2.
+Launch robot_state_publisher and RViz for the Go2 description.
 
-Connects robot_state_publisher to /joint_states (published by ohho_go2_bridge).
+Sim only, no gait controller. /joint_states come from ohho_go2_bridge, or from
+joint_state_publisher / joint_state_publisher_gui when the bridge is off.
 """
 
 from __future__ import annotations
@@ -11,8 +12,8 @@ from pathlib import Path
 from ament_index_python.packages import PackageNotFoundError, get_package_share_directory
 from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument
-from launch.conditions import IfCondition, UnlessCondition
-from launch.substitutions import Command, LaunchConfiguration
+from launch.conditions import IfCondition
+from launch.substitutions import Command, LaunchConfiguration, PythonExpression
 from launch_ros.actions import Node
 from launch_ros.parameter_descriptions import ParameterValue
 
@@ -32,6 +33,7 @@ def generate_launch_description() -> LaunchDescription:
 
     use_sim_time = LaunchConfiguration("use_sim_time")
     use_bridge_joint_states = LaunchConfiguration("use_bridge_joint_states")
+    use_jsp_gui = LaunchConfiguration("use_joint_state_publisher_gui")
     rviz = LaunchConfiguration("rviz")
     rviz_config = LaunchConfiguration("rviz_config")
     urdf_file = LaunchConfiguration("urdf_file")
@@ -50,6 +52,14 @@ def generate_launch_description() -> LaunchDescription:
         "use_bridge_joint_states",
         default_value="true",
         description="Expect /joint_states from ohho_go2_bridge; false for offline JSP",
+    )
+    jsp_gui_arg = DeclareLaunchArgument(
+        "use_joint_state_publisher_gui",
+        default_value="false",
+        description=(
+            "When use_bridge_joint_states is false, launch joint_state_publisher_gui "
+            "instead of joint_state_publisher"
+        ),
     )
     rviz_arg = DeclareLaunchArgument(
         "rviz",
@@ -82,14 +92,45 @@ def generate_launch_description() -> LaunchDescription:
         ],
     )
 
-    # Offline fallback if bridge is not publishing /joint_states
+    # Offline fallback if bridge is not publishing /joint_states.
+    # The GUI publisher is optional and is not started together with the plain one.
+    offline_plain = IfCondition(
+        PythonExpression(
+            [
+                "'",
+                use_bridge_joint_states,
+                "'.lower() == 'false' and '",
+                use_jsp_gui,
+                "'.lower() == 'false'",
+            ]
+        )
+    )
+    offline_gui = IfCondition(
+        PythonExpression(
+            [
+                "'",
+                use_bridge_joint_states,
+                "'.lower() == 'false' and '",
+                use_jsp_gui,
+                "'.lower() == 'true'",
+            ]
+        )
+    )
     joint_state_pub_node = Node(
         package="joint_state_publisher",
         executable="joint_state_publisher",
         name="joint_state_publisher",
         output="screen",
         parameters=[{"use_sim_time": use_sim_time}],
-        condition=UnlessCondition(use_bridge_joint_states),
+        condition=offline_plain,
+    )
+    joint_state_pub_gui_node = Node(
+        package="joint_state_publisher_gui",
+        executable="joint_state_publisher_gui",
+        name="joint_state_publisher_gui",
+        output="screen",
+        parameters=[{"use_sim_time": use_sim_time}],
+        condition=offline_gui,
     )
 
     rviz_node = Node(
@@ -107,10 +148,12 @@ def generate_launch_description() -> LaunchDescription:
             urdf_arg,
             sim_time_arg,
             bridge_joints_arg,
+            jsp_gui_arg,
             rviz_arg,
             rviz_config_arg,
             robot_state_pub_node,
             joint_state_pub_node,
+            joint_state_pub_gui_node,
             rviz_node,
         ]
     )
