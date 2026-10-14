@@ -209,7 +209,7 @@ def extract_sim_section_lines(readme_text: str) -> list[int]:
     for lineno, line in enumerate(readme_text.splitlines(), 1):
         stripped = line.strip()
         m_heading = re.match(r"^(#+)", stripped)
-        if m_heading and re.search(r"[Ss]im only.*not hardware-tested", stripped):
+        if m_heading and re.search(r"[Ss]im.*not hardware-tested", stripped):
             in_section = True
             section_level = len(m_heading.group(1))
             continue
@@ -334,14 +334,35 @@ def check_status_table(root: Path) -> None:
                 fail(
                     f"README Status table: Built row has no evidence link: {row}"
                 )
+            rel_links = extract_relative_links(row)
             # Check relative links resolve
-            for rel_path in extract_relative_links(row):
+            for rel_path in rel_links:
                 target = root / rel_path
                 if not target.exists():
                     fail(
                         f"README Status table: Built row links to path that does not "
                         f"exist: {rel_path}"
                     )
+            # Built rows must link CI (workflow file, actions URL, or TODO)
+            has_ci = (
+                any(".github/workflows" in p for p in rel_links)
+                or re.search(r"https?://", row)
+                or "TODO" in row
+            )
+            if not has_ci:
+                fail(
+                    f"README Status table: Built row must link CI (or placeholder URL TODO): {row}"
+                )
+
+        # Rule: hardware row must be Vision and state "Vision until Go2 EDU available"
+        if len(cells) >= 1 and re.search(r"\bhardware\b", cells[0], re.IGNORECASE):
+            if status_value != "Vision":
+                fail(f"README Status table: Hardware row status must be Vision: {row}")
+            if "Vision until Go2 EDU available" not in row:
+                fail(
+                    f"README Status table: Hardware row must state "
+                    f"'Vision until Go2 EDU available': {row}"
+                )
 
 
 def check_banned_readme_terms(root: Path) -> None:

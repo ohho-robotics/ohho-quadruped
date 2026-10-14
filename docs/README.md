@@ -8,13 +8,16 @@ This directory will hold Architecture Decision Records (ADRs) and runbooks.
 
 | ID | Title | Status |
 |---|---|---|
-| 0001 | Unitree Go2: target, sport-mode first, MuJoCo-first sim, safety rules | Proposed (PR #3) |
+| 0001 | Unitree Go2: target, sport-mode first, MuJoCo-first sim, safety rules | Accepted ([0001-unitree-go2.md](adr/0001-unitree-go2.md)) |
 
-ADR 0001 is open in PR #3 and has not yet been merged:
+ADR 0001 was merged to main in PR #3:
 https://github.com/ohho-robotics/ohho-quadruped/pull/3
 
-Do **not** create or edit anything under `docs/adr/` on this branch — that
-directory is owned by PR #3 to avoid add/add conflicts.
+## Sibling follow-ups (OHH-133)
+
+See [docs/sibling-followups.md](sibling-followups.md) for required honesty updates in:
+- `ohho-os`: `docs/unitree.md` (planned: sim-tested only, not hardware-tested; domain 0 arming gates; sport-mode allowlist)
+- `site`: `docs/ohho-os/robots.md` (sim-tested only, not hardware-tested; Vision until Go2 EDU available)
 
 ## Runbooks (planned)
 
