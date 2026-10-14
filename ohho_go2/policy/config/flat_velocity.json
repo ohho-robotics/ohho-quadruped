@@ -1,0 +1,22 @@
+{
+  "spec_version": "ohho-go2-velocity-v1",
+  "terrain": "flat",
+  "cmd_vel_limits": {
+    "vx": 0.8,
+    "vy": 0.4,
+    "wz": 1.0
+  },
+  "default_joint_pos": [
+    0.0, 0.8, -1.5,
+    0.0, 0.8, -1.5,
+    0.0, 0.8, -1.5,
+    0.0, 0.8, -1.5
+  ],
+  "action_scale": 0.25,
+  "policy_hz": 50.0,
+  "kp": [20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20],
+  "kd": [0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5],
+  "obs_dim": 48,
+  "action_dim": 12,
+  "rl_lab_notes": "planned: map to unitree_rl_lab Go2 velocity env when GPU train runs"
+}
