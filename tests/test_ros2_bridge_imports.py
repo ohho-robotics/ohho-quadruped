@@ -17,7 +17,10 @@ from ohho_go2_bridge.domain_guard import (  # noqa: E402
     require_safe_ros_domain,
 )
 from ohho_go2_bridge.mode_allowlist import resolve_mode  # noqa: E402
-from ohho_go2_bridge.transport import MockSportTransport  # noqa: E402
+from ohho_go2_bridge.transport import (  # noqa: E402
+    MockSportTransport,
+    resolve_sport_transport,
+)
 from ohho_go2_bridge.velocity_limits import clamp_twist  # noqa: E402
 from ohho_go2_bridge.watchdog import CmdVelWatchdog  # noqa: E402
 
@@ -77,6 +80,24 @@ class TestCmdVelWatchdog(unittest.TestCase):
         self.assertTrue(bridge.tick_watchdog(0.31))
         self.assertEqual(transport.stop_count, 1)
         self.assertEqual(transport.moves[-1], (0.1, 0.0, 0.0))
+
+
+class TestResolveSportTransport(unittest.TestCase):
+    def test_mock_flag_uses_mock_without_refusal(self) -> None:
+        transport, refused_real = resolve_sport_transport(None, use_mock=True)
+        self.assertIsInstance(transport, MockSportTransport)
+        self.assertFalse(refused_real)
+
+    def test_real_transport_request_stays_on_mock(self) -> None:
+        transport, refused_real = resolve_sport_transport(None, use_mock=False)
+        self.assertIsInstance(transport, MockSportTransport)
+        self.assertTrue(refused_real)
+
+    def test_injected_transport_is_unchanged(self) -> None:
+        injected = MockSportTransport()
+        transport, refused_real = resolve_sport_transport(injected, use_mock=False)
+        self.assertIs(transport, injected)
+        self.assertFalse(refused_real)
 
 
 class TestModeAllowlist(unittest.TestCase):

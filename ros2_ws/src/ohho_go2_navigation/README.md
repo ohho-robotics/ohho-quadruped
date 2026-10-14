@@ -7,7 +7,7 @@ Navigation stack configuration (Nav2 + SLAM Toolbox) and simulation bringup for 
 - **Robot footprint**: ~0.70m x 0.31m (`[[0.35, 0.155], [0.35, -0.155], [-0.35, -0.155], [-0.35, 0.155]]`)
 - **Velocity limits**: Enforces SafetyGate limits (0.5 m/s forward, 0.3 m/s lateral, 1.0 rad/s yaw)
 - **SLAM**: `slam_toolbox` online async mapping from `/scan`
-- **Sim bringup**: `go2_nav_sim.launch.py` brings up description, bridge, SLAM, and Nav2 in a single command
+- **Sim bringup**: `go2_nav_sim.launch.py` brings up description, the mock bridge, a sim-only kinematic sensor node, SLAM, and Nav2 in a single command
 
 ## Usage (ROS 2 Humble)
 
@@ -32,7 +32,7 @@ ros2 launch ohho_go2_navigation go2_nav_sim.launch.py
 
 Options:
 - `headless:=true` — disables RViz2 (for CI and headless containers)
-- `use_mock_sim:=true` — runs fast bridge kinematic simulation without requiring MuJoCo
+- `use_mock_sim:=true` — runs the sim-only kinematic sensor node (not hardware; MuJoCo is not required)
 - `scene:=office` — MuJoCo environment scene (when `use_mock_sim:=false`)
 
 ## MuJoCo Office Evaluation Status

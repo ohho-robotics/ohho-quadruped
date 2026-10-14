@@ -2,7 +2,6 @@
 
 ROS 2 bridge scaffolding for the Unitree Go2 (Humble primary, Jazzy best-effort).
 **Sim and mock only in CI** — no `unitree_ros2` dependency yet, no hardware commands.
-*Note: Vendored/built on the bridge scaffold from PR #9 (`ohh-131-go2-ros2-bridge`), pending its merge to main.*
 
 ## Topic mapping
 

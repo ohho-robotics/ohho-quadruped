@@ -56,7 +56,7 @@ ohho_go2/                         Python package: sport shim + sim helpers (plan
 sim/                              unitree_mujoco launch + scenes (planned, November 2026)
 ros2_ws/src/ohho_go2_bridge/      ROS 2 Humble bridge (scaffold; mock transport)
 ros2_ws/src/go2_description/      Go2 URDF, meshes, and RViz display launch
-ros2_ws/src/ohho_go2_navigation/  Nav2 params, SLAM toolbox, and all-in-one sim launch
+ros2_ws/src/ohho_go2_navigation/  Nav2 params, SLAM toolbox, sim-only sensors, and all-in-one sim launch
 docs/                             ADRs and runbooks (ADR 0001 in PR #3)
 scripts/                          Credibility check v2
 tests/                            stdlib unittest tests

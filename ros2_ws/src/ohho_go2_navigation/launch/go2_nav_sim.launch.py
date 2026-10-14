@@ -3,11 +3,12 @@ All-in-one Go2 simulation, bridge, SLAM, and Nav2 bringup.
 
 Launches:
 1. go2_description (robot_state_publisher)
-2. ohho_go2_bridge (/cmd_vel, /odom, /scan, /joint_states, TF)
-3. slam_toolbox (online async 2D mapping from /scan)
-4. Nav2 (planner, controller, smoother, recoveries, BT navigator)
-5. RViz2 (when headless:=false)
-6. Optional MuJoCo simulation subprocess (when use_mock_sim:=false)
+2. ohho_go2_bridge (/cmd_vel sport mock)
+3. sim-only kinematic sensors when use_mock_sim:=true (/odom, /scan, /joint_states, TF)
+4. slam_toolbox (online async 2D mapping from /scan)
+5. Nav2 (planner, controller, smoother, recoveries, BT navigator)
+6. RViz2 (when headless:=false)
+7. Optional MuJoCo simulation subprocess (when use_mock_sim:=false)
 """
 
 from __future__ import annotations
@@ -23,7 +24,7 @@ from launch.actions import (
     IncludeLaunchDescription,
     SetEnvironmentVariable,
 )
-from launch.conditions import UnlessCondition
+from launch.conditions import IfCondition, UnlessCondition
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.substitutions import LaunchConfiguration
 from launch_ros.actions import Node
@@ -76,7 +77,7 @@ def generate_launch_description() -> LaunchDescription:
     mock_sim_arg = DeclareLaunchArgument(
         "use_mock_sim",
         default_value="true",
-        description="Use bridge kinematic sim; set false to launch unitree_mujoco",
+        description="Use the sim-only kinematic sensor node; set false to launch unitree_mujoco",
     )
     scene_arg = DeclareLaunchArgument(
         "scene",
@@ -141,13 +142,26 @@ def generate_launch_description() -> LaunchDescription:
         parameters=[
             {
                 "use_mock_transport": True,
-                # Mock kinematic sensors (CI / headless); MuJoCo path not wired yet.
-                "publish_sim_sensors": True,
+                "watchdog_timeout_sec": 0.3,
+                "use_sim_time": ParameterValue(use_sim_time, value_type=bool),
+            }
+        ],
+    )
+
+    # Sim-only kinematic sensors. Not launched on the MuJoCo path.
+    sim_sensor_node = Node(
+        package="ohho_go2_navigation",
+        executable="go2_sim_sensor_node",
+        name="go2_sim_sensors",
+        output="screen",
+        parameters=[
+            {
                 "sim_sensor_rate_hz": 20.0,
                 "watchdog_timeout_sec": 0.3,
                 "use_sim_time": ParameterValue(use_sim_time, value_type=bool),
             }
         ],
+        condition=IfCondition(use_mock_sim),
     )
 
     # 3. slam_toolbox (online async)
@@ -204,6 +218,7 @@ def generate_launch_description() -> LaunchDescription:
             autostart_arg,
             rsp_node,
             bridge_node,
+            sim_sensor_node,
             slam_node,
             nav2_launch,
             rviz_node,

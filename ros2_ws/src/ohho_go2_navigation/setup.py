@@ -33,6 +33,8 @@ setup(
     description="Nav2 configuration, SLAM toolbox setup, and all-in-one sim launch for Go2.",
     license="Apache-2.0",
     entry_points={
-        "console_scripts": [],
+        "console_scripts": [
+            "go2_sim_sensor_node = ohho_go2_navigation.sim_sensor_node:main",
+        ],
     },
 )

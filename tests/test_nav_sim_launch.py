@@ -40,6 +40,9 @@ class TestNavSimLaunch(unittest.TestCase):
         self.assertIn("default_value=\"office\"", text)
         self.assertIn("robot_state_publisher", text)
         self.assertIn("ohho_go2_bridge", text)
+        self.assertIn("go2_sim_sensor_node", text)
+        self.assertIn("IfCondition(use_mock_sim)", text)
+        self.assertNotIn("publish_sim_sensors", text)
         self.assertIn("slam_toolbox", text)
         self.assertIn("nav2.launch.py", text)
 
