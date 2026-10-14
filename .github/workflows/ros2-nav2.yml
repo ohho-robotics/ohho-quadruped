@@ -28,6 +28,8 @@ jobs:
         run: |
           source /opt/ros/humble/setup.bash
           source ros2_ws/install/setup.bash
+          export ROS2CLI_DISABLE_DAEMON=1
+          ros2 daemon stop 2>/dev/null || true
           ros2 run ohho_go2_bridge go2_bridge_node --ros-args -p publish_sim_sensors:=true &
           pid=$!
           sleep 5

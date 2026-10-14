@@ -11,6 +11,7 @@ set -euo pipefail
 
 export ROS_DOMAIN_ID=1
 export ROS_LOCALHOST_ONLY=1
+export ROS2CLI_DISABLE_DAEMON=1
 
 echo "==> Sourcing ROS 2 and workspace setup"
 if [ -f /opt/ros/humble/setup.bash ]; then
@@ -25,6 +26,8 @@ if [ -f "$REPO_ROOT/ros2_ws/install/setup.bash" ]; then
   # shellcheck disable=SC1091
   source "$REPO_ROOT/ros2_ws/install/setup.bash"
 fi
+
+ros2 daemon stop 2>/dev/null || true
 
 echo "==> Launching Go2 navigation stack in headless mode (mock sim, domain 1)"
 LOGFILE="/tmp/go2_nav_sim.log"
