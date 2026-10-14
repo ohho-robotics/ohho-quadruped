@@ -14,6 +14,8 @@ export ROS_LOCALHOST_ONLY=1
 export ROS2CLI_DISABLE_DAEMON=1
 
 echo "==> Sourcing ROS 2 and workspace setup"
+# Humble setup.bash reads unset AMENT_* variables; nounset would abort the test.
+set +u
 if [ -f /opt/ros/humble/setup.bash ]; then
   # shellcheck disable=SC1091
   source /opt/ros/humble/setup.bash
@@ -26,6 +28,7 @@ if [ -f "$REPO_ROOT/ros2_ws/install/setup.bash" ]; then
   # shellcheck disable=SC1091
   source "$REPO_ROOT/ros2_ws/install/setup.bash"
 fi
+set -u
 
 ros2 daemon stop 2>/dev/null || true
 
