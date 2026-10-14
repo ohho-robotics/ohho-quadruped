@@ -7,16 +7,15 @@ on:
 jobs:
   nav2-headless-launch-test:
     runs-on: ubuntu-22.04
+    container:
+      image: ros:humble-ros-base-jammy
     env:
       ROS_DOMAIN_ID: "1"
     steps:
       - uses: actions/checkout@v4
-      - uses: ros-tooling/setup-ros@v0.7
-        with:
-          required-ros-distributions: humble
       - name: Install workspace ROS dependencies (rosdep)
         shell: bash
-        run: bash scripts/ci/install-humble-ws-deps.sh
+        run: bash scripts/ci/install-humble-ws-deps-container.sh
       - name: Build packages (Humble)
         shell: bash
         run: |
