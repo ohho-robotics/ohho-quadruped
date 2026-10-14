@@ -5,7 +5,7 @@ from __future__ import annotations
 import os
 import sys
 from collections.abc import Callable, Mapping
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 
 HARDWARE_ARM_ENV = "OHHO_ARM_HARDWARE"
 CONFIRM_PHRASE = (
@@ -62,7 +62,7 @@ def require_safe_ros_domain(
     if reply != CONFIRM_PHRASE:
         raise DomainRefusedError("Hardware arming confirmation phrase did not match.")
 
-    stamp = datetime.now(UTC).isoformat()
+    stamp = datetime.now(timezone.utc).isoformat()
     line = f"{stamp} hardware_armed ros_domain_id=0"
     if log_confirm is not None:
         log_confirm(line)
