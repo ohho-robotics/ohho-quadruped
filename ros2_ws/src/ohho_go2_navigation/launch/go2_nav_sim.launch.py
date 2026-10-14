@@ -137,10 +137,10 @@ def generate_launch_description() -> LaunchDescription:
         parameters=[
             {
                 "use_mock_transport": True,
-                "publish_sim_sensors": use_mock_sim,
+                "publish_sim_sensors": ParameterValue(use_mock_sim, value_type=bool),
                 "sim_sensor_rate_hz": 20.0,
                 "watchdog_timeout_sec": 0.3,
-                "use_sim_time": use_sim_time,
+                "use_sim_time": ParameterValue(use_sim_time, value_type=bool),
             }
         ],
     )
