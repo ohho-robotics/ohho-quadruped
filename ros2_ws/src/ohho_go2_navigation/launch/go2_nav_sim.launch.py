@@ -109,6 +109,10 @@ def generate_launch_description() -> LaunchDescription:
         "ROS_DOMAIN_ID",
         os.environ.get("ROS_DOMAIN_ID", "1") or "1",
     )
+    localhost_env = SetEnvironmentVariable(
+        "ROS_LOCALHOST_ONLY",
+        os.environ.get("ROS_LOCALHOST_ONLY", "1") or "1",
+    )
 
     # 1. Robot description (robot_state_publisher)
     urdf_content = ""
@@ -154,7 +158,7 @@ def generate_launch_description() -> LaunchDescription:
         output="screen",
         parameters=[
             slam_params_file,
-            {"use_sim_time": use_sim_time},
+            {"use_sim_time": ParameterValue(use_sim_time, value_type=bool)},
         ],
     )
 
@@ -189,6 +193,7 @@ def generate_launch_description() -> LaunchDescription:
     return LaunchDescription(
         [
             domain_env,
+            localhost_env,
             sim_time_arg,
             headless_arg,
             mock_sim_arg,
