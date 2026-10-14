@@ -11,9 +11,6 @@ jobs:
       ROS_DOMAIN_ID: "1"
     steps:
       - uses: actions/checkout@v4
-      - name: Prepare ROS apt sources (GHA)
-        shell: bash
-        run: bash scripts/ci/prepare-ros-apt-for-gha.sh
       - uses: ros-tooling/setup-ros@v0.7
         with:
           required-ros-distributions: humble
