@@ -31,3 +31,7 @@ htmlcov/
 # OS
 .DS_Store
 Thumbs.db
+
+# CI / local Unitree stack (OHH-124)
+artifacts/
+.unitree/
