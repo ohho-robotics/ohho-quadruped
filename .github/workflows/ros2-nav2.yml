@@ -1,0 +1,47 @@
+name: ros2-nav2
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  nav2-headless-launch-test:
+    runs-on: ubuntu-22.04
+    container:
+      image: ros:humble-ros-base-jammy
+    env:
+      ROS_DOMAIN_ID: "1"
+      ROS_LOCALHOST_ONLY: "1"
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install workspace ROS dependencies
+        shell: bash
+        run: bash scripts/ci/install-humble-ws-deps-container.sh
+      - name: Build packages (Humble)
+        shell: bash
+        run: |
+          source /opt/ros/humble/setup.bash
+          cd ros2_ws
+          colcon build --packages-select go2_description ohho_go2_bridge ohho_go2_navigation
+      - name: Smoke bridge and sim-only sensors
+        shell: bash
+        run: |
+          source /opt/ros/humble/setup.bash
+          source ros2_ws/install/setup.bash
+          export ROS2CLI_DISABLE_DAEMON=1
+          ros2 daemon stop 2>/dev/null || true
+          ros2 run ohho_go2_bridge go2_bridge_node &
+          bridge_pid=$!
+          ros2 run ohho_go2_navigation go2_sim_sensor_node &
+          sim_pid=$!
+          sleep 5
+          kill -0 "$bridge_pid"
+          kill -0 "$sim_pid"
+          ros2 topic list | grep -q /odom
+          ros2 topic list | grep -q /scan
+          ros2 topic list | grep -q /joint_states
+          kill "$bridge_pid" "$sim_pid" || true
+      - name: Headless launch-test (~60s)
+        shell: bash
+        run: |
+          bash scripts/ci/run-nav2-headless-test.sh

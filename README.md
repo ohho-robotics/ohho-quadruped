@@ -19,7 +19,8 @@ https://github.com/ohho-robotics/ohho-quadruped/pull/3
 | Decision record ADR 0001 (proposed) | In progress | https://github.com/ohho-robotics/ohho-quadruped/pull/3 |
 | Dev environment on Varun's PC (OHH-114) | In progress | https://linear.app/ohho-robotics/issue/OHH-114 |
 | Unitree Go2 EDU in MuJoCo sim (unitree_mujoco, sport shim) | Vision | planned, from November 2026 |
-| ROS 2 bridge (Humble, Jazzy best-effort) | Vision | planned, from early 2027 |
+| ROS 2 bridge (Humble, Jazzy best-effort) | In progress | [ros2_ws/src/ohho_go2_bridge/](ros2_ws/src/ohho_go2_bridge/), [.github/workflows/ros2-bridge.yml](.github/workflows/ros2-bridge.yml) |
+| Go2 description + RViz + Nav2 params (OHH-132) | In progress | [ros2_ws/src/go2_description/](ros2_ws/src/go2_description/), [ros2_ws/src/ohho_go2_navigation/](ros2_ws/src/ohho_go2_navigation/) |
 | Hardware bring-up (gated on a Go2 EDU, operator present) | Vision | planned, gated on OHH-135 |
 
 ## Sim only, not hardware-tested
@@ -51,12 +52,14 @@ bash scripts/check-credibility.sh
 ## Layout
 
 ```text
-ohho_go2/          Python package: sport shim + sim helpers (planned, November 2026)
-sim/               unitree_mujoco launch + scenes (planned, November 2026)
-ros2_ws/src/ohho_go2_bridge/   ROS 2 Humble bridge (planned, early 2027)
-docs/              ADRs and runbooks (ADR 0001 in PR #3)
-scripts/           Credibility check v2
-tests/             stdlib unittest tests
+ohho_go2/                         Python package: sport shim + sim helpers (planned, November 2026)
+sim/                              unitree_mujoco launch + scenes (planned, November 2026)
+ros2_ws/src/ohho_go2_bridge/      ROS 2 Humble bridge (scaffold; mock transport)
+ros2_ws/src/go2_description/      Go2 URDF, meshes, and RViz display launch
+ros2_ws/src/ohho_go2_navigation/  Nav2 params, SLAM toolbox, sim-only sensors, and all-in-one sim launch
+docs/                             ADRs and runbooks (ADR 0001 in PR #3)
+scripts/                          Credibility check v2
+tests/                            stdlib unittest tests
 ```
 
 ## License
