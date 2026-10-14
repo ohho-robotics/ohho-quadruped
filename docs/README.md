@@ -16,10 +16,18 @@ https://github.com/ohho-robotics/ohho-quadruped/pull/3
 Do **not** create or edit anything under `docs/adr/` on this branch — that
 directory is owned by PR #3 to avoid add/add conflicts.
 
-## Runbooks (planned)
+## Runbooks
 
-Runbooks for sim setup, hardware arming, and safety procedures will be added
-as each milestone is completed (M1 onward, November 2026).
+| Runbook | What it is |
+|---|---|
+| [Go2 sport-mode motion (OHH-137)](runbooks/go2-sport-motion.md) | Staged procedure for a later human session. Nothing in it has been executed. |
+| [Evidence template (OHH-137)](runbooks/go2-sport-motion-evidence-template.md) | Empty table. Dates, videos, logs, stop times, and results are unfilled. |
+
+**Needs Varun: physically present with the remote; Go2 EDU access (OHH-135).**
+
+An agent session must not arm hardware and must not run those motion steps.
+Further sim-setup and arming runbooks are still planned for later milestones
+(M1 onward, November 2026).
 
 ## Notes
 
