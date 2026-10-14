@@ -1,6 +1,7 @@
 # OhhO Quadruped
 
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
+[![Sim smoke CI](https://img.shields.io/badge/sim%20smoke-workflow-blue)](.github/workflows/sim-smoke.yml)
 
 **M0 scaffold — no robot code yet.** The working robot is [OmniBot](https://github.com/ohho-robotics/OmniBot).
 
@@ -15,6 +16,7 @@ https://github.com/ohho-robotics/ohho-quadruped/pull/3
 |---|---|---|
 | Credibility check v2 | Built | [scripts/check_credibility.py](scripts/check_credibility.py), [.github/workflows/credibility.yml](.github/workflows/credibility.yml) |
 | Python lint + unittest CI | Built | [.github/workflows/python.yml](.github/workflows/python.yml) |
+| MuJoCo + DDS smoke CI (OHH-124) | In progress | [.github/workflows/sim-smoke.yml](.github/workflows/sim-smoke.yml) |
 | AGENTS.md safety rules for coding agents | Built | [AGENTS.md](AGENTS.md) |
 | Decision record ADR 0001 (proposed) | In progress | https://github.com/ohho-robotics/ohho-quadruped/pull/3 |
 | Dev environment on Varun's PC (OHH-114) | In progress | https://linear.app/ohho-robotics/issue/OHH-114 |
