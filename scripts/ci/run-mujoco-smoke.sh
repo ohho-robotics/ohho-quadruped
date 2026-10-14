@@ -23,6 +23,7 @@ elif [ -x "$UNITREE_WS/venv/bin/python" ]; then
 fi
 
 cd "$REPO_ROOT"
+export PYTHONPATH="$REPO_ROOT${PYTHONPATH:+:$PYTHONPATH}"
 
 echo "== MuJoCo smoke: unittest contract (mock-backed)"
 set +e

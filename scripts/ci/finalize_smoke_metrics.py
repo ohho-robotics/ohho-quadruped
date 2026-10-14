@@ -5,9 +5,15 @@ from __future__ import annotations
 
 import importlib.util
 import os
+import sys
 from pathlib import Path
 
-from ohho_go2.smoke.metrics import SmokeReport, write_report
+# `python scripts/ci/finalize_smoke_metrics.py` puts scripts/ci on sys.path, not the repo root.
+_REPO = Path(__file__).resolve().parents[2]
+if str(_REPO) not in sys.path:
+    sys.path.insert(0, str(_REPO))
+
+from ohho_go2.smoke.metrics import SmokeReport, write_report  # noqa: E402
 
 
 def main() -> int:
