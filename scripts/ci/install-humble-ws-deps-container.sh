@@ -1,24 +1,23 @@
 #!/usr/bin/env bash
-# install-humble-ws-deps-container.sh - rosdep install inside ros:humble-ros-base-jammy (CI).
+# install-humble-ws-deps-container.sh - Nav2 + SLAM apt deps inside ros:humble-ros-base-jammy.
 #
-# Avoids apt conflicts from setup-ros on GitHub-hosted ubuntu-22.04 runners when
-# installing Nav2 binary packages.
+# Uses explicit binary packages (not the navigation2 metapackage) to avoid apt resolver
+# conflicts on GitHub-hosted runners. Local workspace packages are built with colcon.
 
 set -euo pipefail
 
 export DEBIAN_FRONTEND=noninteractive
 
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
-
 apt-get update -qq
 apt-get install -y -qq --no-install-recommends \
   python3-colcon-common-extensions \
-  python3-rosdep
-
-# shellcheck disable=SC1091
-source /opt/ros/humble/setup.bash
-
-rosdep update
-cd "$REPO_ROOT/ros2_ws"
-rosdep install --from-paths src --ignore-src -y -r --rosdistro humble
+  ros-humble-ament-cmake \
+  ros-humble-nav2-bringup \
+  ros-humble-nav2-smoother \
+  ros-humble-nav2-behaviors \
+  ros-humble-nav2-waypoint-follower \
+  ros-humble-slam-toolbox \
+  ros-humble-robot-state-publisher \
+  ros-humble-joint-state-publisher \
+  ros-humble-xacro \
+  ros-humble-rviz2

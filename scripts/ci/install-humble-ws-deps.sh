@@ -1,24 +1,24 @@
 #!/usr/bin/env bash
-# install-humble-ws-deps.sh - Install ros2_ws package dependencies via rosdep (Humble).
+# install-humble-ws-deps.sh - Nav2 + SLAM apt deps on setup-ros runners.
 #
-# Run after ros-tooling/setup-ros so duplicate ROS apt list files can be deduped safely.
+# Same package set as install-humble-ws-deps-container.sh, with apt source dedupe after setup-ros.
 
 set -euo pipefail
 
 export DEBIAN_FRONTEND=noninteractive
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 
 bash "$SCRIPT_DIR/prepare-ros-apt-for-gha.sh"
 sudo apt-get update -qq
-
-# shellcheck disable=SC1091
-source /opt/ros/humble/setup.bash
-
-echo "==> Updating rosdep database"
-rosdep update
-
-echo "==> Installing workspace dependencies from package.xml (rosdep)"
-cd "$REPO_ROOT/ros2_ws"
-rosdep install --from-paths src --ignore-src -y -r --rosdistro humble
+sudo apt-get install -y -qq --no-install-recommends \
+  ros-humble-ament-cmake \
+  ros-humble-nav2-bringup \
+  ros-humble-nav2-smoother \
+  ros-humble-nav2-behaviors \
+  ros-humble-nav2-waypoint-follower \
+  ros-humble-slam-toolbox \
+  ros-humble-robot-state-publisher \
+  ros-humble-joint-state-publisher \
+  ros-humble-xacro \
+  ros-humble-rviz2
