@@ -15,6 +15,7 @@ https://github.com/ohho-robotics/ohho-quadruped/pull/3
 |---|---|---|
 | Credibility check v2 | Built | [scripts/check_credibility.py](scripts/check_credibility.py), [.github/workflows/credibility.yml](.github/workflows/credibility.yml) |
 | Python lint + unittest CI | Built | [.github/workflows/python.yml](.github/workflows/python.yml) |
+| Go2 velocity policy train/export scaffold (OHH-122) | Built | [docs/train-velocity-policy.md](docs/train-velocity-policy.md), [ohho_go2/policy/](ohho_go2/policy/) |
 | AGENTS.md safety rules for coding agents | Built | [AGENTS.md](AGENTS.md) |
 | Decision record ADR 0001 (proposed) | In progress | https://github.com/ohho-robotics/ohho-quadruped/pull/3 |
 | Dev environment on Varun's PC (OHH-114) | In progress | https://linear.app/ohho-robotics/issue/OHH-114 |
@@ -51,7 +52,7 @@ bash scripts/check-credibility.sh
 ## Layout
 
 ```text
-ohho_go2/          Python package: sport shim + sim helpers (planned, November 2026)
+ohho_go2/          Python package: sport shim + sim helpers (planned, November 2026); policy scaffold (OHH-122)
 sim/               unitree_mujoco launch + scenes (planned, November 2026)
 ros2_ws/src/ohho_go2_bridge/   ROS 2 Humble bridge (planned, early 2027)
 docs/              ADRs and runbooks (ADR 0001 in PR #3)
