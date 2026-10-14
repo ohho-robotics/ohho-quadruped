@@ -15,14 +15,14 @@ log() { printf '\n==> %s\n' "$*"; }
 clone_pinned() {
   local repo="$1" dir="$2" ref="$3" own_edit="${4:-}"
   if [ ! -d "$dir/.git" ]; then
-    git clone --quiet "$repo" "$dir"
+    git clone --quiet "$repo" "$dir" || return 1
   fi
   if [ "$(git -C "$dir" rev-parse HEAD)" != "$ref" ]; then
-    git -C "$dir" fetch --quiet origin
+    git -C "$dir" fetch --quiet origin || return 1
     if [ -n "$own_edit" ]; then
       git -C "$dir" checkout --quiet -- "$own_edit" 2>/dev/null || true
     fi
-    git -C "$dir" checkout --quiet --detach "$ref"
+    git -C "$dir" checkout --quiet --detach "$ref" || return 1
   fi
   echo "$(basename "$dir") @ $(git -C "$dir" rev-parse --short HEAD)"
 }
@@ -81,15 +81,29 @@ sed -i -E \
   -e 's/^USE_JOYSTICK = [0-9]+/USE_JOYSTICK = 0/' \
   "$SIM_CFG"
 
-if [ "${SKIP_OHHO_SDK:-0}" = "1" ]; then
-  log "ohho-sdk[unitree]: skipped"
-else
-  log "ohho-sdk[unitree] (editable, pinned)"
+install_ohho_sdk() {
+  # Missing pin or missing [unitree] extra must not fail the sim stack.
+  # Sport-mode behaviour under test lives in ohho_go2 (PR #8 / OHH-123), not ohho-sdk.
+  if [ "${SKIP_OHHO_SDK:-0}" = "1" ]; then
+    log "ohho-sdk[unitree]: skipped"
+    return 0
+  fi
+  log "ohho-sdk (editable, pinned ${OHHO_SDK_REF})"
   OHHO_SDK_DIR="${OHHO_SDK_DIR:-$UNITREE_WS/ohho-sdk}"
-  clone_pinned "$OHHO_SDK_REPO" "$OHHO_SDK_DIR" "$OHHO_SDK_REF"
-  "$PY" -m pip install --quiet -e "${OHHO_SDK_DIR}[unitree]" || \
+  if ! clone_pinned "$OHHO_SDK_REPO" "$OHHO_SDK_DIR" "$OHHO_SDK_REF"; then
+    echo "warning: ohho-sdk pin ${OHHO_SDK_REF} is not available; continuing without it." >&2
+    return 0
+  fi
+  if [ ! -f "$OHHO_SDK_DIR/pyproject.toml" ] && [ ! -f "$OHHO_SDK_DIR/setup.py" ] && [ ! -f "$OHHO_SDK_DIR/setup.cfg" ]; then
+    echo "warning: ohho-sdk @ ${OHHO_SDK_REF} has no Python project; [unitree] extra skipped." >&2
+    return 0
+  fi
+  if ! "$PY" -m pip install --quiet -e "${OHHO_SDK_DIR}[unitree]"; then
     echo "warning: ohho-sdk[unitree] install failed; mock smoke tests still run." >&2
-fi
+  fi
+}
+
+install_ohho_sdk
 
 DOWNLOAD_SCRIPT="$SCRIPT_DIR/download-policy-checkpoint.sh"
 if [ -f "$DOWNLOAD_SCRIPT" ]; then

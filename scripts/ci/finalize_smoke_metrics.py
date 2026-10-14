@@ -27,16 +27,21 @@ def main() -> int:
         reason = os.environ.get("DDS_SKIP_REASON", "not run")
         dds_sim["reason"] = reason
 
-    sport_shim: dict[str, str] = {
-        "status": "skipped",
-        "reason": (
-            "OHH-123 sport shim not in repo; TODO python -m ohho_go2.sport_shim"
-        ),
-    }
-    if importlib.util.find_spec("ohho_go2.sport_shim"):
+    sport_status = os.environ.get("SPORT_SHIM_STATUS", "").strip()
+    sport_reason = os.environ.get("SPORT_SHIM_REASON", "").strip()
+    if sport_status:
+        sport_shim: dict[str, str] = {"status": sport_status}
+        if sport_reason:
+            sport_shim["reason"] = sport_reason
+    elif importlib.util.find_spec("ohho_go2.sport_shim"):
         sport_shim = {
             "status": "skipped",
-            "reason": "sport_shim module present; CI entrypoint not wired in OHH-124 skeleton",
+            "reason": "sport_shim module present; run scripts/ci/run-mujoco-smoke.sh to execute it",
+        }
+    else:
+        sport_shim = {
+            "status": "skipped",
+            "reason": "OHH-123 sport shim is not in this checkout (quadruped PR #8)",
         }
 
     office_scene: dict[str, str]

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import json
 from dataclasses import asdict, dataclass, field
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
@@ -14,7 +14,7 @@ class SmokeReport:
     schema: str = "ohho-mujoco-smoke-v1"
     issue: str = "OHH-124"
     timestamp_utc: str = field(
-        default_factory=lambda: datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%SZ")
+        default_factory=lambda: datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
     )
     unittest: dict[str, Any] = field(default_factory=dict)
     dds_sim: dict[str, Any] = field(default_factory=dict)
