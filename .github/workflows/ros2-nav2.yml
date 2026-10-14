@@ -23,6 +23,11 @@ jobs:
           source /opt/ros/humble/setup.bash
           cd ros2_ws
           colcon build --packages-select go2_description ohho_go2_bridge ohho_go2_navigation
+      # URDF parse and launch --show-args. Gazebo Harmonic headless spawn is a
+      # local check (docs/evidence/ohh-65.md), not this Humble job.
+      - name: Check go2_description URDF and launch args
+        shell: bash
+        run: bash scripts/ci/check-go2-description.sh
       - name: Smoke bridge and sim-only sensors
         shell: bash
         run: |

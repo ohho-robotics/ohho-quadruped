@@ -19,5 +19,7 @@ apt-get install -y -qq --no-install-recommends \
   ros-humble-slam-toolbox \
   ros-humble-robot-state-publisher \
   ros-humble-joint-state-publisher \
+  ros-humble-joint-state-publisher-gui \
   ros-humble-xacro \
-  ros-humble-rviz2
+  ros-humble-rviz2 \
+  liburdfdom-tools
