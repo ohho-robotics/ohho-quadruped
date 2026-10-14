@@ -11,9 +11,15 @@ jobs:
       ROS_DOMAIN_ID: "1"
     steps:
       - uses: actions/checkout@v4
-      - uses: ros-tooling/setup-ros@v0.7
+      - name: Prepare ROS apt sources (GHA)
+        shell: bash
+        run: bash scripts/ci/prepare-ros-apt-for-gha.sh
+      - uses: ros-tooling/setup-ros@v0.7.19
         with:
           required-ros-distributions: humble
+      - name: Install workspace ROS dependencies (rosdep)
+        shell: bash
+        run: bash scripts/ci/install-humble-ws-deps.sh
       - name: Build ohho_go2_bridge (Humble)
         shell: bash
         run: |
@@ -34,7 +40,7 @@ jobs:
       ROS_DOMAIN_ID: "1"
     steps:
       - uses: actions/checkout@v4
-      - uses: ros-tooling/setup-ros@v0.7
+      - uses: ros-tooling/setup-ros@v0.7.19
         with:
           required-ros-distributions: jazzy
       - name: Build ohho_go2_bridge (Jazzy, best-effort)
