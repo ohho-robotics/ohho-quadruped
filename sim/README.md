@@ -1,32 +1,77 @@
-# sim/ — planned, not built
+# sim/ — Go2 MuJoCo launcher (OHH-121)
 
-**Status: planned. Nothing in this directory is implemented.**
+OhhO scenes and a launcher around Unitree's pinned `unitree_mujoco` Python sim
+(`simulate_python`) on **DDS domain 1, interface `lo`**.
 
-This directory will hold:
+## Prerequisites
 
-- `launch/` — unitree_mujoco launch scripts for the Go2 scene
-- `scenes/` — MuJoCo XML scene descriptions (Go2 robot + environment)
+Install the pinned stack in WSL2 Ubuntu 22.04 (OHH-114):
 
-## Planned setup
+```bash
+bash scripts/dev/setup-unitree-wsl.sh
+. ~/unitree/env.sh
+```
 
-The simulator uses `unitree_mujoco` (Python) on **DDS domain 1, interface `lo`**
-(loopback). This is the default for sim. Domain 0 or a real NIC requires the
-hardware-arming flag (`OHHO_ARM_HARDWARE=1`) and an interactive TTY confirmation
-that a human operator is physically present — agents and CI cannot arm.
+Pin: `1eb6642e3f3fdfb7fb13a9794fd6a2dd93ea0e7d` (see `sim/pins.py` and `NOTICE`).
 
-Switching from sim to real is a one-line change:
-`ChannelFactoryInitialize(1, "lo")` → `ChannelFactoryInitialize(0, "<nic>")`.
+Override checkout location:
 
-## Dependencies (planned)
+```bash
+export OHHO_UNITREE_MUJOCO_ROOT=~/unitree/unitree_mujoco
+```
 
-- `unitree_mujoco` (installed from source in WSL2 Ubuntu 22.04, OHH-114)
-- MuJoCo viewer via WSLg
-- CycloneDDS 0.10.2 (pinned)
-- DDS domain 1 / interface `lo` for sim
+## Run
 
-ROS 2, Gazebo, Isaac, and GPU tooling are **not** used in this directory.
+From the repo root (with `env.sh` sourced in WSL):
 
-## Implementation schedule
+```bash
+python sim/run_go2.py --scene flat
+python sim/run_go2.py --headless --scene office --no-joystick
+python sim/run_go2.py --headless --scene flat --render-front-camera --duration 10
+```
 
-M2 (November 2026, OHH-121–124) per ADR 0001 (proposed, PR #3):
-https://github.com/ohho-robotics/ohho-quadruped/pull/3
+| Flag | Default | Purpose |
+|------|---------|---------|
+| `--scene` | `flat` | `flat`, `terrain`, or `office` |
+| `--headless` | off | No viewer; set `MUJOCO_GL=egl` (or `osmesa`) for offscreen |
+| `--domain` | `1` | CycloneDDS domain |
+| `--iface` | `lo` | DDS interface (loopback for sim) |
+| `--no-joystick` | off | Disable wireless controller emulation |
+| `--render-front-camera` | off | Offscreen render `ohho_front_camera` each step |
+
+Headless CI should use EGL or OSMesa (`MUJOCO_GL=egl` or `MUJOCO_GL=osmesa`), not Xvfb.
+
+## Scenes
+
+- `sim/scenes/*_env.xml` — environment MJCF fragments (floor, props).
+- Composed with `unitree_robots/go2/go2.xml` from the pinned `unitree_mujoco` tree.
+- Labelled objects (`red_box`, `blue_cone`, …) have fixed world poses in
+  `sim/scene_objects.py` for perception / nav tests later.
+- `ohho_front_camera` is attached to `base_link` at the Go2 head pose when the
+  model is loaded (see `sim/mjcf.py`).
+
+## Layout
+
+```text
+sim/run_go2.py       CLI entry
+sim/launcher.py      DDS + physics loop (viewer or headless)
+sim/mjcf.py          Scene compose + front camera
+sim/scenes/          OhhO MJCF environment fragments
+```
+
+## Safety
+
+Domain 0 or a non-loopback interface requires `OHHO_ARM_HARDWARE=1` and an
+interactive TTY confirmation. Agents and CI must stay on domain 1 / `lo`.
+
+## Verification (human / CI)
+
+- `python sim/run_go2.py --headless --scene office` for 60 s at real-time factor
+  ≥ 0.9 with LowState on domain 1 — not automated in this repo yet; see OHH-121
+  acceptance criteria.
+
+Smoke of the upstream stack (without OhhO scenes):
+
+```bash
+bash scripts/dev/smoke-unitree-sim.sh
+```
