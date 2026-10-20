@@ -14,8 +14,8 @@ jobs:
           python-version: "3.12"
       - name: Clone URL check (exercises README clone command)
         run: git clone https://github.com/ohho-robotics/ohho-quadruped.git /tmp/ohho-quadruped-clone
-      - name: Install ruff
-        run: python -m pip install ruff
+      - name: Install ruff and pytest (sim tests skip if mujoco missing)
+        run: python -m pip install ruff pytest
       - name: Lint (exercises README ruff check command)
         run: ruff check .
       - name: Install ohho-os (exercises README sim quickstart)
