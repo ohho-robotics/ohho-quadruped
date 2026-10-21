@@ -32,5 +32,9 @@ htmlcov/
 .DS_Store
 Thumbs.db
 
+# CI / local Unitree stack (OHH-124)
+artifacts/
+.unitree/
+
 # Local upstream clones for dev / agent sessions (not committed)
 .tmp-unitree_mujoco/

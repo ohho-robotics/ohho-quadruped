@@ -32,7 +32,8 @@ SDK2PY_REF="814556d15970dd2ecf1c9984e845ca02ab07e206"
 MUJOCO_SIM_REPO="https://github.com/unitreerobotics/unitree_mujoco.git"
 MUJOCO_SIM_REF="1eb6642e3f3fdfb7fb13a9794fd6a2dd93ea0e7d"
 OHHO_SDK_REPO="https://github.com/ohho-robotics/ohho-sdk.git"
-OHHO_SDK_REF="f4a83fa4c87f50a0421048a2216e3c47767768b3"
+# Keep in sync with scripts/ci/pins.sh. f4a83fa is not on ohho-sdk.
+OHHO_SDK_REF="493378937fe4eb60ae24dedcb62124288c246d04"
 MUJOCO_PY_VERSION="${MUJOCO_PY_VERSION:-3.3.7}"
 PYGAME_VERSION="${PYGAME_VERSION:-2.6.1}"
 
@@ -57,14 +58,14 @@ fi
 clone_pinned() {
   local repo="$1" dir="$2" ref="$3" own_edit="${4:-}"
   if [ ! -d "$dir/.git" ]; then
-    git clone --quiet "$repo" "$dir"
+    git clone --quiet "$repo" "$dir" || return 1
   fi
   if [ "$(git -C "$dir" rev-parse HEAD)" != "$ref" ]; then
-    git -C "$dir" fetch --quiet origin
+    git -C "$dir" fetch --quiet origin || return 1
     if [ -n "$own_edit" ]; then
-      git -C "$dir" checkout --quiet -- "$own_edit"
+      git -C "$dir" checkout --quiet -- "$own_edit" || return 1
     fi
-    git -C "$dir" checkout --quiet --detach "$ref"
+    git -C "$dir" checkout --quiet --detach "$ref" || return 1
   fi
   echo "$(basename "$dir") @ $(git -C "$dir" rev-parse --short HEAD)"
 }
@@ -129,16 +130,23 @@ grep -E '^(ROBOT|DOMAIN_ID|INTERFACE|USE_JOYSTICK) =' "$SIM_CFG"
 if [ "${SKIP_OHHO_SDK:-0}" = "1" ]; then
   log "ohho-sdk[unitree]: skipped (SKIP_OHHO_SDK=1)"
 else
-  log "ohho-sdk[unitree] (editable)"
+  log "ohho-sdk (editable, pinned)"
   if [ -n "${OHHO_SDK_DIR:-}" ]; then
     echo "using existing checkout: $OHHO_SDK_DIR"
   else
     OHHO_SDK_DIR="$UNITREE_WS/ohho-sdk"
-    clone_pinned "$OHHO_SDK_REPO" "$OHHO_SDK_DIR" "$OHHO_SDK_REF"
+    if ! clone_pinned "$OHHO_SDK_REPO" "$OHHO_SDK_DIR" "$OHHO_SDK_REF"; then
+      echo "warning: ohho-sdk pin ${OHHO_SDK_REF} is not available; continuing without it." >&2
+      OHHO_SDK_DIR=""
+    fi
   fi
-  # The [unitree] extra only asks for cyclonedds>=0.10, so the 0.10.2 build above satisfies it.
-  if ! "$PY" -m pip install --quiet -e "${OHHO_SDK_DIR}[unitree]"; then
-    echo "warning: ohho-sdk[unitree] did not install; the Unitree sim still works without it." >&2
+  if [ -n "${OHHO_SDK_DIR:-}" ] && [ ! -f "$OHHO_SDK_DIR/pyproject.toml" ] && [ ! -f "$OHHO_SDK_DIR/setup.py" ] && [ ! -f "$OHHO_SDK_DIR/setup.cfg" ]; then
+    echo "warning: ohho-sdk @ ${OHHO_SDK_REF} has no Python project; [unitree] extra skipped." >&2
+  elif [ -n "${OHHO_SDK_DIR:-}" ]; then
+    # The [unitree] extra only asks for cyclonedds>=0.10, so the 0.10.2 build above satisfies it.
+    if ! "$PY" -m pip install --quiet -e "${OHHO_SDK_DIR}[unitree]"; then
+      echo "warning: ohho-sdk[unitree] did not install; the Unitree sim still works without it." >&2
+    fi
   fi
 fi
 
