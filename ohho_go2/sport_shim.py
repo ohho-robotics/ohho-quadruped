@@ -2,7 +2,7 @@
 Sport shim: serve Go2 sport API in sim via rt/lowcmd (domain 1, interface lo).
 
 Simulation only — never use on real hardware. Move commands time out to zero
-velocity after 1 s without a new Move (assumption until OHH-137 confirms limits).
+velocity after 300 ms without a new Move, matching the sim-serve deadman.
 """
 
 from __future__ import annotations
@@ -37,7 +37,8 @@ MAX_YAW = 1.0
 MAX_EULER_RAD = 0.3
 
 # Move stream timeout — zero velocity if no Move for this long (seconds).
-MOVE_COMMAND_TIMEOUT_S = 1.0
+# 300 ms matches the console deadman and sim-serve command timeout.
+MOVE_COMMAND_TIMEOUT_S = 0.3
 
 RISE_TIME_S = 2.0
 
