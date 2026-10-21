@@ -1,0 +1,57 @@
+name: sim-smoke
+
+# OHH-124: headless MuJoCo Go2 smoke over DDS (domain 1, lo). Simulation only.
+on:
+  pull_request:
+  push:
+    branches-ignore:
+      - main
+  schedule:
+    - cron: "0 4 * * *"
+
+concurrency:
+  group: sim-smoke-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  UNITREE_WS: ${{ github.workspace }}/.unitree
+  CYCLONEDDS_REF: 9995905bce6c4cf9f740d6438bbf7fcfd1c83dfd
+  OHHO_MUJOCO_SMOKE_DDS: "1"
+
+jobs:
+  smoke:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 14
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Cache CycloneDDS install
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.UNITREE_WS }}/cyclonedds/install
+          key: cyclonedds-${{ env.CYCLONEDDS_REF }}-ubuntu-22.04
+          restore-keys: |
+            cyclonedds-${{ env.CYCLONEDDS_REF }}-
+
+      - name: Install Unitree sim stack
+        run: bash scripts/ci/install-unitree-gha.sh
+
+      # OHH-123 sport shim is in this tree. Do not check out origin/ohh-123-sport-shim:
+      # that ref is gone, and its copy is not the in-tree shim this job must test.
+      - name: Require in-tree sport shim
+        run: |
+          test -f ohho_go2/dds_guard.py
+          test -f ohho_go2/sport_api.py
+          test -f ohho_go2/sport_shim.py
+          test -f tests/test_sport_shim.py
+
+      - name: Sim smoke (unittest + DDS)
+        run: bash scripts/ci/run-mujoco-smoke.sh
+
+      - name: Upload smoke metrics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: sim-smoke-metrics
+          path: artifacts/mujoco-smoke-metrics.json
+          if-no-files-found: error
