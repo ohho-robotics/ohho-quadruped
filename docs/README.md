@@ -19,10 +19,18 @@ See [docs/sibling-followups.md](sibling-followups.md) for required honesty updat
 - `ohho-os`: `docs/unitree.md` (planned: sim-tested only, not hardware-tested; domain 0 arming gates; sport-mode allowlist)
 - `site`: `docs/ohho-os/robots.md` (sim-tested only, not hardware-tested; Vision until Go2 EDU available)
 
-## Runbooks (planned)
+## Runbooks
 
-Runbooks for sim setup, hardware arming, and safety procedures will be added
-as each milestone is completed (M1 onward, November 2026).
+| Runbook | What it is |
+|---|---|
+| [Go2 sport-mode motion (OHH-137)](runbooks/go2-sport-motion.md) | Staged procedure for a later human session. Nothing in it has been executed. |
+| [Evidence template (OHH-137)](runbooks/go2-sport-motion-evidence-template.md) | Empty table. Dates, videos, logs, stop times, and results are unfilled. |
+
+**Needs Varun: physically present with the remote; Go2 EDU access (OHH-135).**
+
+An agent session must not arm hardware and must not run those motion steps.
+Further sim-setup and arming runbooks are still planned for later milestones
+(M1 onward, November 2026).
 
 ## Notes
 
