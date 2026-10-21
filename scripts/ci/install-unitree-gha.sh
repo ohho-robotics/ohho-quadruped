@@ -12,20 +12,71 @@ export UNITREE_WS
 
 log() { printf '\n==> %s\n' "$*"; }
 
+# BEGIN clone_pinned
+# clone_pinned REPO DIR REF [EDITED_FILE]
+# Reuse DIR when it is already a git checkout at REF. Otherwise remove it and
+# clone REF. actions/cache restores cyclonedds/install before this runs, so the
+# parent can exist with no .git and git clone refuses it. That install prefix
+# is put back after the clone; a git checkout at the wrong commit is removed
+# entirely. EDITED_FILE is reapplied by the caller after this returns.
 clone_pinned() {
-  local repo="$1" dir="$2" ref="$3" own_edit="${4:-}"
-  if [ ! -d "$dir/.git" ]; then
-    git clone --quiet "$repo" "$dir" || return 1
-  fi
-  if [ "$(git -C "$dir" rev-parse HEAD)" != "$ref" ]; then
-    git -C "$dir" fetch --quiet origin || return 1
-    if [ -n "$own_edit" ]; then
-      git -C "$dir" checkout --quiet -- "$own_edit" 2>/dev/null || true
+  local repo="$1" dir="$2" ref="$3"
+  local head="" scratch="" rc=0
+
+  if [ -d "$dir/.git" ]; then
+    head="$(git -C "$dir" rev-parse HEAD 2>/dev/null || true)"
+    if [ "$head" = "$ref" ]; then
+      echo "$(basename "$dir") @ $(git -C "$dir" rev-parse --short HEAD)"
+      return 0
     fi
-    git -C "$dir" checkout --quiet --detach "$ref" || return 1
+  fi
+
+  if [ -e "$dir" ]; then
+    if [ -z "${UNITREE_WS:-}" ] || [ "$dir" = "$UNITREE_WS" ]; then
+      echo "refusing to remove $dir" >&2
+      return 1
+    fi
+    case "$dir" in
+      "$UNITREE_WS"/*) ;;
+      *)
+        echo "refusing to remove $dir" >&2
+        return 1
+        ;;
+    esac
+  fi
+
+  if [ -d "$dir/install" ] && [ ! -d "$dir/.git" ]; then
+    scratch="$(mktemp -d "${TMPDIR:-/tmp}/ohho-clone-install.XXXXXX")"
+    mv "$dir/install" "$scratch/install"
+  fi
+  if [ -e "$dir" ]; then
+    rm -rf "$dir"
+  fi
+
+  if ! git clone --quiet "$repo" "$dir"; then
+    rc=1
+  elif [ "$(git -C "$dir" rev-parse HEAD)" != "$ref" ]; then
+    if ! git -C "$dir" fetch --quiet origin; then
+      rc=1
+    elif ! git -C "$dir" checkout --quiet --detach "$ref"; then
+      rc=1
+    fi
+  fi
+
+  if [ -n "$scratch" ] && [ -d "$scratch/install" ]; then
+    mkdir -p "$dir"
+    rm -rf "$dir/install"
+    mv "$scratch/install" "$dir/install"
+  fi
+  if [ -n "$scratch" ]; then
+    rm -rf "$scratch"
+  fi
+  if [ "$rc" -ne 0 ]; then
+    return "$rc"
   fi
   echo "$(basename "$dir") @ $(git -C "$dir" rev-parse --short HEAD)"
 }
+# END clone_pinned
 
 log "apt dependencies"
 sudo apt-get update -qq
