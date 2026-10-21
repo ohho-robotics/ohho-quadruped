@@ -36,14 +36,14 @@ jobs:
       - name: Install Unitree sim stack
         run: bash scripts/ci/install-unitree-gha.sh
 
-      - name: Overlay sport shim from PR 8
+      # OHH-123 sport shim is in this tree. Do not check out origin/ohh-123-sport-shim:
+      # that ref is gone, and its copy is not the in-tree shim this job must test.
+      - name: Require in-tree sport shim
         run: |
-          git fetch --depth=1 origin ohh-123-sport-shim
-          git checkout FETCH_HEAD -- \
-            ohho_go2/dds_guard.py \
-            ohho_go2/sport_api.py \
-            ohho_go2/sport_shim.py \
-            tests/test_sport_shim.py
+          test -f ohho_go2/dds_guard.py
+          test -f ohho_go2/sport_api.py
+          test -f ohho_go2/sport_shim.py
+          test -f tests/test_sport_shim.py
 
       - name: Sim smoke (unittest + DDS)
         run: bash scripts/ci/run-mujoco-smoke.sh

@@ -9,12 +9,18 @@ license = { text = "Apache-2.0" }
 # unitree_sdk2py and DDS deps will be added in M1/M2 (November 2026).
 dependencies = []
 
+[project.optional-dependencies]
+sim = ["mujoco==3.3.7"]
+
 [project.urls]
 Repository = "https://github.com/ohho-robotics/ohho-quadruped"
 
 [build-system]
 requires = ["setuptools>=69"]
 build-backend = "setuptools.backends.legacy:build"
+
+[tool.setuptools.packages.find]
+include = ["ohho_go2*"]
 
 [tool.ruff]
 line-length = 100

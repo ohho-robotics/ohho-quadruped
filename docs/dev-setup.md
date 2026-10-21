@@ -207,6 +207,23 @@ on a Linux interface. For the hardware phase, use native Ubuntu 22.04 on a lapto
 to the robot, or the Go2's onboard Jetson. The sim setup above stays useful for developing
 and testing before that.
 
+## Local console /sim stack
+
+After the smoke test passes, this starts MuJoCo, the sport server, and
+`ohho sim-serve` together so the console Simulation page can drive the Go2.
+Domain 1 and interface `lo` only.
+
+```bash
+export OHHO_OS=/path/to/ohho-os
+bash scripts/dev/sim-go2-stack.sh
+```
+
+`OHHO_OS` is the ohho-os checkout (it must contain `ohho/cli.py`). The script
+sources `/opt/unitree/env.sh` unless `UNITREE_ENV` points somewhere else.
+sim-serve listens on `ws://127.0.0.1:8765`. Install `websockets` into the
+Unitree venv first (`pip install websockets`) or the script exits before
+starting anything. See [`sim/README.md`](../sim/README.md).
+
 ## Troubleshooting
 
 - `Could not locate cyclonedds` while installing the Python binding: `CYCLONEDDS_HOME` is not

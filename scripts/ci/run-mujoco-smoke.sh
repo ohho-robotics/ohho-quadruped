@@ -32,8 +32,7 @@ UNITTEST_RC=$?
 set -e
 echo "$UNITTEST_OUT"
 
-# Sport shim is implemented on quadruped PR #8 (branch ohh-123-sport-shim).
-# This job runs those headless tests when the module is in the tree.
+# Sport shim (OHH-123) is in this tree. Run its headless tests when present.
 SPORT_SHIM_STATUS="skipped"
 SPORT_SHIM_REASON="OHH-123 sport shim is not in this checkout (quadruped PR #8)"
 SPORT_SHIM_RC=0

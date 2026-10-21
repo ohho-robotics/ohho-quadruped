@@ -51,12 +51,14 @@ def main() -> int:
         }
 
     office_scene: dict[str, str]
-    if (repo / "sim/scenes/office.xml").is_file():
-        office_scene = {"status": "present", "path": "sim/scenes/office.xml"}
+    # Main's sim layout names OhhO scenes sim/scenes/<scene>_env.xml (OHH-121).
+    office_rel = "sim/scenes/office_env.xml"
+    if (repo / office_rel).is_file():
+        office_scene = {"status": "present", "path": office_rel}
     else:
         office_scene = {
             "status": "missing",
-            "reason": "sim/scenes/office.xml not added; unitree_mujoco default Go2 scene",
+            "reason": f"{office_rel} not added; unitree_mujoco default Go2 scene",
         }
 
     report = SmokeReport(
