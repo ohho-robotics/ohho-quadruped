@@ -17,9 +17,10 @@ Repository = "https://github.com/ohho-robotics/ohho-quadruped"
 
 [build-system]
 requires = ["setuptools>=69"]
-build-backend = "setuptools.backends.legacy:build"
+build-backend = "setuptools.build_meta"
 
 [tool.setuptools.packages.find]
+where = ["."]
 include = ["ohho_go2*"]
 
 [tool.ruff]

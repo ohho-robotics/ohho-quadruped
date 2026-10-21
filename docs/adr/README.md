@@ -3,3 +3,4 @@
 # Architecture Decision Records (ADRs)
 
 * [0001-unitree-go2.md](0001-unitree-go2.md) - Unitree ADR: Go2 EDU target, sport-mode first, MuJoCo-first sim, safety rules
+* [0002-velocity-policy-training-stack.md](0002-velocity-policy-training-stack.md) - Go2 velocity-policy training stack (scaffold)

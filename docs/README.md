@@ -9,6 +9,7 @@ This directory will hold Architecture Decision Records (ADRs) and runbooks.
 | ID | Title | Status |
 |---|---|---|
 | 0001 | Unitree Go2: target, sport-mode first, MuJoCo-first sim, safety rules | Accepted ([0001-unitree-go2.md](adr/0001-unitree-go2.md)) |
+| 0002 | Go2 velocity-policy training stack (scaffold) | Accepted scaffold ([0002-velocity-policy-training-stack.md](adr/0002-velocity-policy-training-stack.md)) |
 
 ADR 0001 was merged to main in PR #3:
 https://github.com/ohho-robotics/ohho-quadruped/pull/3
@@ -20,6 +21,8 @@ See [docs/sibling-followups.md](sibling-followups.md) for required honesty updat
 - `site`: `docs/ohho-os/robots.md` (sim-tested only, not hardware-tested; Vision until Go2 EDU available)
 
 ## Runbooks (planned)
+
+Scaffold only (not a finished train): [train-velocity-policy.md](train-velocity-policy.md).
 
 Runbooks for sim setup, hardware arming, and safety procedures will be added
 as each milestone is completed (M1 onward, November 2026).
