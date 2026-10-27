@@ -75,3 +75,26 @@ Smoke of the upstream stack (without OhhO scenes):
 ```bash
 bash scripts/dev/smoke-unitree-sim.sh
 ```
+
+## Local /sim stack
+
+`scripts/dev/sim-go2-stack.sh` starts three processes on DDS domain 1 / `lo`:
+
+1. `python sim/run_go2.py --headless --no-joystick --domain 1 --iface lo` (MuJoCo)
+2. `python -m ohho_go2.dds_server` (sport RPC + `rt/lowcmd`)
+3. `ohho sim-serve --backend robot --robot unitree-go2 --transport dds://lo?domain=1`
+
+Point `OHHO_OS` at an ohho-os checkout and source the Unitree env (the script
+does that when `UNITREE_ENV` is set; default `/opt/unitree/env.sh`). sim-serve
+listens on `ws://127.0.0.1:8765`. The console Add robot → Go2 → Simulation
+page connects there. The in-browser kinematic sim stays the fallback when
+nothing is listening.
+
+```bash
+export OHHO_OS=/path/to/ohho-os
+bash scripts/dev/sim-go2-stack.sh
+```
+
+The Unitree venv also needs `websockets` (`pip install websockets`). Do not
+change the domain or interface: the sport server refuses domain 0 and any
+interface other than `lo`.
