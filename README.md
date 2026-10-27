@@ -23,7 +23,7 @@ https://github.com/ohho-robotics/ohho-quadruped/pull/3
 | Decision record ADR 0001 (accepted) | Built | [docs/adr/0001-unitree-go2.md](docs/adr/0001-unitree-go2.md), [.github/workflows/credibility.yml](.github/workflows/credibility.yml), https://github.com/ohho-robotics/ohho-quadruped/pull/3 |
 | Dev environment on Varun's PC (OHH-114) | In progress | [docs/dev-setup.md](docs/dev-setup.md), https://linear.app/ohho-robotics/issue/OHH-114 |
 | Unitree Go2 EDU in MuJoCo sim (unitree_mujoco, sport shim) | Vision | planned, from November 2026 |
-| ROS 2 bridge (Humble, Jazzy best-effort) | Vision | planned, from early 2027 |
+| ROS 2 bridge (Humble, Jazzy best-effort) | In progress | [ros2_ws/src/ohho_go2_bridge/](ros2_ws/src/ohho_go2_bridge/), [.github/workflows/ros2-bridge.yml](.github/workflows/ros2-bridge.yml) |
 | Hardware bring-up (Go2 EDU, operator present) | Vision | Vision until Go2 EDU available |
 
 ## Sim only, not hardware-tested
@@ -70,7 +70,7 @@ bash scripts/check-credibility.sh
 ```text
 ohho_go2/          Python package: sport shim + sim helpers (planned, November 2026); policy scaffold (OHH-122)
 sim/               Go2 sim launcher + OhhO scenes (see sim/README.md)
-ros2_ws/src/ohho_go2_bridge/   ROS 2 Humble bridge (planned, early 2027)
+ros2_ws/src/ohho_go2_bridge/   ROS 2 Humble bridge (scaffold; mock transport)
 docs/              ADRs, runbooks, and sibling follow-ups (ADR 0001 accepted; ADR 0002 velocity-policy scaffold)
 scripts/           Credibility check v2
 tests/             stdlib unittest tests

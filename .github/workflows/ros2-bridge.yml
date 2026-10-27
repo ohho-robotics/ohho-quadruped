@@ -1,0 +1,45 @@
+name: ros2-bridge
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  colcon-humble:
+    runs-on: ubuntu-22.04
+    env:
+      ROS_DOMAIN_ID: "1"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ros-tooling/setup-ros@v0.7
+        with:
+          required-ros-distributions: humble
+      - name: Build ohho_go2_bridge (Humble)
+        shell: bash
+        run: |
+          source /opt/ros/humble/setup.bash
+          cd ros2_ws
+          colcon build --packages-select ohho_go2_bridge
+      - name: Smoke import go2_bridge_node
+        shell: bash
+        run: |
+          source /opt/ros/humble/setup.bash
+          source ros2_ws/install/setup.bash
+          python3 -c "from ohho_go2_bridge.bridge_node import Go2BridgeNode; print('ok')"
+
+  colcon-jazzy:
+    runs-on: ubuntu-24.04
+    continue-on-error: true
+    env:
+      ROS_DOMAIN_ID: "1"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ros-tooling/setup-ros@v0.7
+        with:
+          required-ros-distributions: jazzy
+      - name: Build ohho_go2_bridge (Jazzy, best-effort)
+        shell: bash
+        run: |
+          source /opt/ros/jazzy/setup.bash
+          cd ros2_ws
+          colcon build --packages-select ohho_go2_bridge

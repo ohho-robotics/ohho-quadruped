@@ -1,0 +1,22 @@
+{
+  "name": "ohho-quadruped ROS 2 Humble",
+  "build": {
+    "dockerfile": "Dockerfile",
+    "context": ".."
+  },
+  "workspaceFolder": "/workspace",
+  "workspaceMount": "source=${localWorkspaceFolder},target=/workspace,type=bind",
+  "remoteUser": "root",
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "ms-python.python",
+        "ms-iot.vscode-ros"
+      ]
+    }
+  },
+  "postCreateCommand": "bash -lc 'source /opt/ros/humble/setup.bash && cd ros2_ws && colcon build --packages-select ohho_go2_bridge'",
+  "containerEnv": {
+    "ROS_DOMAIN_ID": "1"
+  }
+}
