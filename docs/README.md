@@ -20,7 +20,17 @@ See [docs/sibling-followups.md](sibling-followups.md) for required honesty updat
 - `ohho-os`: `docs/unitree.md` (planned: sim-tested only, not hardware-tested; domain 0 arming gates; sport-mode allowlist)
 - `site`: `docs/ohho-os/robots.md` (sim-tested only, not hardware-tested; Vision until Go2 EDU available)
 
-## Runbooks (planned)
+## Runbooks
+
+**Needs Varun: physically present, Go2 EDU access (OHH-135).**
+
+| Runbook | What it is |
+|---|---|
+| [Go2 bring-up](runbooks/go2-bringup.md) | Six-step read-only procedure. Written in advance. Not executed. No motion. |
+| [Evidence template](runbooks/go2-bringup-evidence-template.md) | Blank sheet for that procedure. Measured cells stay empty in git. |
+
+`python scripts/check_bringup_runbook.py` checks those two files offline
+(no DDS import, no socket).
 
 Scaffold only (not a finished train): [train-velocity-policy.md](train-velocity-policy.md).
 
