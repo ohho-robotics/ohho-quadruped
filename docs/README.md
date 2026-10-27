@@ -22,14 +22,22 @@ See [docs/sibling-followups.md](sibling-followups.md) for required honesty updat
 
 ## Runbooks
 
+**Needs Varun: physically present, Go2 EDU access (OHH-135).**
+
 | Runbook | What it is |
 |---|---|
+| [Go2 bring-up](runbooks/go2-bringup.md) | Six-step read-only procedure. Written in advance. Not executed. No motion. |
+| [Evidence template](runbooks/go2-bringup-evidence-template.md) | Blank sheet for that procedure. Measured cells stay empty in git. |
 | [Go2 sport-mode motion (OHH-137)](runbooks/go2-sport-motion.md) | Staged procedure for a later human session. Nothing in it has been executed. |
 | [Evidence template (OHH-137)](runbooks/go2-sport-motion-evidence-template.md) | Empty table. Dates, videos, logs, stop times, and results are unfilled. |
+
+`python scripts/check_bringup_runbook.py` checks those two files offline
+(no DDS import, no socket). The bring-up pair is the first two rows above.
 
 **Needs Varun: physically present with the remote; Go2 EDU access (OHH-135).**
 
 An agent session must not arm hardware and must not run those motion steps.
+`python scripts/rehearse_sport_motion.py` rehearses the sport-motion steps offline on a fake transport.
 
 Scaffold only (not a finished train): [train-velocity-policy.md](train-velocity-policy.md).
 

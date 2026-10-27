@@ -1,34 +1,42 @@
-# ohho_go2_bridge — planned, not built
+# ohho_go2_bridge
 
-**Status: planned. Nothing in this package is implemented.**
+ROS 2 bridge scaffolding for the Unitree Go2 (Humble primary, Jazzy best-effort).
+**Sim and mock only in CI** — no `unitree_ros2` dependency yet, no hardware commands.
 
-This ROS 2 package will provide a bridge between the OhhO intelligence layer and
-the Unitree Go2 over ROS 2 topics.
+## Topic mapping
 
-## Planned topics
+See [docs/TOPIC_MAPPING.md](docs/TOPIC_MAPPING.md):
 
-| Topic | Type | Direction |
-|---|---|---|
-| `/sportmodestate` | `unitree_go/SportModeState` | Subscribe (from robot) |
-| `/lowstate` | `unitree_go/LowState` | Subscribe (from robot) |
-| `/api/sport/request` | `unitree_api/Request` | Publish (to robot) |
-| `/wirelesscontroller` | `unitree_go/WirelessController` | Subscribe |
+- `/cmd_vel` → sport `Move` with SafetyGate velocity caps and a **300 ms** `StopMove` watchdog
+- `sportmodestate` → `/odom` + TF (stub until Unitree transport lands)
+- `lowstate` → `/joint_states` + `/battery` (stub)
+- `utlidar` cloud → `/scan` (stub)
+- `/ohho/estop` (`std_msgs/Empty`) latched stop
+- `/ohho/mode` (`std_msgs/String`) stand/lie allowlist
 
-## Target distribution
+## Build (Humble)
 
-**Primary: ROS 2 Humble** (Unitree-tested). Jazzy: best-effort.
+```bash
+export ROS_DOMAIN_ID=1
+cd ros2_ws
+colcon build --packages-select ohho_go2_bridge
+source install/setup.bash
+ros2 launch ohho_go2_bridge bridge.launch.py
+```
 
-Network: static `192.168.123.99/24` on the robot NIC (hardware phase only).
+Use the dev container (`.devcontainer/`) on Windows/WSL for a Humble toolchain without Unitree packages.
 
-## Dependencies (planned)
+## Safety
 
-- ROS 2 Humble (WSL2 Ubuntu 22.04, OHH-114)
-- `unitree_ros2` message packages (`unitree_go`, `unitree_api`)
-- colcon build system
+- Default velocity caps match planned SafetyGate: 0.5 / 0.3 / 1.0 m/s and rad/s.
+- `ROS_DOMAIN_ID=0` is refused unless `OHHO_ARM_HARDWARE=1` and an interactive TTY confirmation is provided.
 
-**No `package.xml`, no launch files, no colcon code** are committed here yet.
+## Tests
 
-## Implementation schedule
+Root repo unittests (no colcon required):
 
-M4 (by early January 2027, OHH-131/132) per ADR 0001 (proposed, PR #3):
-https://github.com/ohho-robotics/ohho-quadruped/pull/3
+```bash
+python -m unittest discover -s tests
+```
+
+CI: [.github/workflows/ros2-bridge.yml](../../.github/workflows/ros2-bridge.yml).
