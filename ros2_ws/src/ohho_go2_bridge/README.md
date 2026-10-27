@@ -39,4 +39,4 @@ Root repo unittests (no colcon required):
 python -m unittest discover -s tests
 ```
 
-CI: [.github/workflows/ros2-bridge.yml](../../.github/workflows/ros2-bridge.yml).
+CI: [.github/workflows/ros2-bridge.yml](../../../.github/workflows/ros2-bridge.yml).

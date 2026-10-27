@@ -1,7 +1,4 @@
 /**:
   ros__parameters:
     use_mock_transport: true
-    cmd_vel_topic: "/cmd_vel"
-    odom_frame: "odom"
-    base_frame: "base_link"
     watchdog_timeout_sec: 0.3

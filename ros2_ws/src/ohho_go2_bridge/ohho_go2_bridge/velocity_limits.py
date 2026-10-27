@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import math
 from dataclasses import dataclass
 
 # Go2 defaults (m/s and rad/s).
@@ -24,6 +25,9 @@ class VelocityCaps:
 
 
 def _clamp_symmetric(value: float, limit: float) -> float:
+    # NaN fails both comparisons and would otherwise pass through to Move.
+    if math.isnan(value):
+        return 0.0
     if value > limit:
         return limit
     if value < -limit:

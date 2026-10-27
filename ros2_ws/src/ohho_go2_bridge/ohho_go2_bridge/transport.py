@@ -41,3 +41,19 @@ class MockSportTransport:
     def latch_estop(self) -> None:
         self.estop_latched = True
         self.stop_move()
+
+
+def resolve_sport_transport(
+    transport: SportTransport | None,
+    *,
+    use_mock: bool,
+) -> tuple[SportTransport, bool]:
+    """Choose a transport for this sim-only scaffold.
+
+    An injected transport is used unchanged. Otherwise the result is always
+    MockSportTransport. The second value is True when ``use_mock`` is false:
+    a real Unitree transport is not available, so the caller stays on the mock.
+    """
+    if transport is not None:
+        return transport, False
+    return MockSportTransport(), not use_mock

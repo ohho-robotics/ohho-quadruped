@@ -1,8 +1,10 @@
 """
-ROS 2 bridge node (scaffolding).
+ROS 2 bridge node (scaffolding, mock transport only).
 
-Subscribes to standard OhhO topics and drives a SportTransport (mock by default).
-Does not import unitree_ros2; DDS / Unitree subscriptions are stubbed for M4.
+Subscribes to standard OhhO topics and drives a SportTransport: MockSportTransport
+unless one is injected (tests). There is no hardware transport and no unitree_ros2
+import. Sensor publishers are declared and stay silent; simulated streams for Nav2
+come from the sim-only node in ohho_go2_navigation.
 """
 
 from __future__ import annotations
@@ -19,8 +21,12 @@ from std_msgs.msg import Empty, String
 from ohho_go2_bridge.cmd_vel_bridge import CmdVelBridge
 from ohho_go2_bridge.domain_guard import require_safe_ros_domain
 from ohho_go2_bridge.mode_allowlist import resolve_mode
-from ohho_go2_bridge.transport import MockSportTransport, SportTransport
-from ohho_go2_bridge.watchdog import CmdVelWatchdog
+from ohho_go2_bridge.transport import (
+    MockSportTransport,
+    SportTransport,
+    resolve_sport_transport,
+)
+from ohho_go2_bridge.watchdog import CmdVelWatchdog, require_positive_finite_timeout
 
 
 class Go2BridgeNode(Node):
@@ -30,18 +36,21 @@ class Go2BridgeNode(Node):
         self.declare_parameter("watchdog_timeout_sec", 0.3)
 
         use_mock = self.get_parameter("use_mock_transport").get_parameter_value().bool_value
-        timeout = self.get_parameter("watchdog_timeout_sec").get_parameter_value().double_value
+        timeout = require_positive_finite_timeout(
+            self.get_parameter("watchdog_timeout_sec").get_parameter_value().double_value
+        )
 
-        if transport is not None:
-            self._transport = transport
-        elif use_mock:
-            self._transport = MockSportTransport()
-            self.get_logger().info("Using MockSportTransport (no Unitree DDS).")
-        else:
-            raise NotImplementedError(
-                "Real Unitree transport is not wired in this scaffold; "
-                "set use_mock_transport:=true or pass a transport in tests."
+        self._transport, refused_real = resolve_sport_transport(
+            transport,
+            use_mock=use_mock,
+        )
+        if refused_real:
+            self.get_logger().error(
+                "use_mock_transport is false; this scaffold is sim-only "
+                "and stays on MockSportTransport."
             )
+        elif transport is None:
+            self.get_logger().info("Using MockSportTransport (no Unitree DDS).")
 
         self._cmd = CmdVelBridge(
             self._transport,
@@ -53,6 +62,8 @@ class Go2BridgeNode(Node):
         self.create_subscription(Empty, "/ohho/estop", self._on_estop, 10)
         self.create_subscription(String, "/ohho/mode", self._on_mode, 10)
 
+        # Declared so the topic graph matches the mapping doc. This node does not
+        # publish samples; the sim-only sensor node does that in Nav2 launches.
         self._odom_pub = self.create_publisher(Odometry, "/odom", 10)
         self._joint_pub = self.create_publisher(JointState, "/joint_states", 10)
         self._battery_pub = self.create_publisher(BatteryState, "/battery", 10)
@@ -62,8 +73,7 @@ class Go2BridgeNode(Node):
         self.create_timer(period, self._watchdog_timer)
 
         self.get_logger().info(
-            "ohho_go2_bridge ready: /cmd_vel -> Move + %.0fms StopMove watchdog",
-            timeout * 1000,
+            f"ohho_go2_bridge ready: /cmd_vel -> Move + {timeout * 1000:.0f}ms StopMove watchdog"
         )
 
     def _on_cmd_vel(self, msg: Twist) -> None:
@@ -98,32 +108,10 @@ class Go2BridgeNode(Node):
         try:
             sport_cmd = resolve_mode(msg.data)
         except ValueError as exc:
-            self.get_logger().error("Refused /ohho/mode: %s", exc)
+            self.get_logger().error(f"Refused /ohho/mode: {exc}")
             return
         self._transport.invoke_mode(sport_cmd)
-        self.get_logger().info("Mode %s -> sport %s", msg.data, sport_cmd)
-
-    def publish_placeholder_sensor_topics(self) -> None:
-        """Publish empty sensor outputs so graph checks pass in smoke tests."""
-        stamp = self.get_clock().now().to_msg()
-        odom = Odometry()
-        odom.header.stamp = stamp
-        odom.header.frame_id = "odom"
-        odom.child_frame_id = "base_link"
-        self._odom_pub.publish(odom)
-
-        joints = JointState()
-        joints.header.stamp = stamp
-        self._joint_pub.publish(joints)
-
-        battery = BatteryState()
-        battery.header.stamp = stamp
-        self._battery_pub.publish(battery)
-
-        scan = LaserScan()
-        scan.header.stamp = stamp
-        scan.header.frame_id = "base_link"
-        self._scan_pub.publish(scan)
+        self.get_logger().info(f"Mode {msg.data} -> sport {sport_cmd}")
 
 
 def main(args: list[str] | None = None) -> None:
