@@ -17,7 +17,7 @@ What you end up with:
 | `unitree_sdk2_python` | commit `814556d`, editable install | `$UNITREE_WS/unitree_sdk2_python` |
 | `mujoco` / `pygame` | `3.3.7` / `2.6.1` | `$UNITREE_WS/venv` |
 | `unitree_mujoco` | commit `1eb6642` | `$UNITREE_WS/unitree_mujoco` |
-| `ohho-sdk[unitree]` (`ohho-os`) | commit `f4a83fa`, editable install | `$UNITREE_WS/ohho-sdk` |
+| `ohho-sdk` | commit `4933789` (no Python `[unitree]` extra on this commit; setup warns and continues) | `$UNITREE_WS/ohho-sdk` |
 
 `UNITREE_WS` defaults to `~/unitree`. The pins live at the top of
 [`scripts/dev/setup-unitree-wsl.sh`](../scripts/dev/setup-unitree-wsl.sh); bump them
@@ -73,7 +73,9 @@ re-applies the sim config. It:
    `simulate_python/config.py` to `ROBOT = "go2"`, `DOMAIN_ID = 1`, `INTERFACE = "lo"`,
    `USE_JOYSTICK = 0`;
 7. clones `ohho-sdk` at the pinned commit and runs `pip install -e ohho-sdk[unitree]`
-   (skip with `SKIP_OHHO_SDK=1`, or point `OHHO_SDK_DIR` at an existing checkout);
+   when that tree is a Python project (skip with `SKIP_OHHO_SDK=1`, or point
+   `OHHO_SDK_DIR` at an existing checkout). A missing pin or a tree with no
+   `[unitree]` extra prints a warning and setup continues;
 8. writes `$UNITREE_WS/env.sh`.
 
 Before working in a new shell:
@@ -205,6 +207,23 @@ on a Linux interface. For the hardware phase, use native Ubuntu 22.04 on a lapto
 to the robot, or the Go2's onboard Jetson. The sim setup above stays useful for developing
 and testing before that.
 
+## Local console /sim stack
+
+After the smoke test passes, this starts MuJoCo, the sport server, and
+`ohho sim-serve` together so the console Simulation page can drive the Go2.
+Domain 1 and interface `lo` only.
+
+```bash
+export OHHO_OS=/path/to/ohho-os
+bash scripts/dev/sim-go2-stack.sh
+```
+
+`OHHO_OS` is the ohho-os checkout (it must contain `ohho/cli.py`). The script
+sources `/opt/unitree/env.sh` unless `UNITREE_ENV` points somewhere else.
+sim-serve listens on `ws://127.0.0.1:8765`. Install `websockets` into the
+Unitree venv first (`pip install websockets`) or the script exits before
+starting anything. See [`sim/README.md`](../sim/README.md).
+
 ## Troubleshooting
 
 - `Could not locate cyclonedds` while installing the Python binding: `CYCLONEDDS_HOME` is not
@@ -241,7 +260,7 @@ imports ok
 cyclonedds 9995905bce6c4cf9f740d6438bbf7fcfd1c83dfd 0.10.2
 unitree_sdk2_python 814556d15970dd2ecf1c9984e845ca02ab07e206
 unitree_mujoco 1eb6642e3f3fdfb7fb13a9794fd6a2dd93ea0e7d
-ohho-sdk f4a83fa4c87f50a0421048a2216e3c47767768b3
+ohho-sdk f4a83fa4c87f50a0421048a2216e3c47767768b3 (this commit is no longer on ohho-sdk; scripts now pin 4933789)
 libddsc.so.0 => /opt/unitree/cyclonedds/install/lib/libddsc.so.0
 NVIDIA GeForce RTX 5060 Ti, 16311 MiB, 591.86
 == 2026-10-04T11:05:22+01:00 smoke test
