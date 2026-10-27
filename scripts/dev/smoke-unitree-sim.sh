@@ -42,7 +42,11 @@ grep -E '^(ROBOT|DOMAIN_ID|INTERFACE|USE_JOYSTICK) =' "$SIM_DIR/config.py"
 
 cd "$SIM_DIR"
 if [ "$HEADLESS" = "1" ]; then
-  echo "== starting unitree_mujoco headless (Xvfb)"
+  # GitHub-hosted runners have no GPU. Software GL keeps mujoco.viewer.launch_passive up under Xvfb.
+  export MUJOCO_GL="${MUJOCO_GL:-glfw}"
+  export LIBGL_ALWAYS_SOFTWARE="${LIBGL_ALWAYS_SOFTWARE:-1}"
+  export SDL_VIDEODRIVER="${SDL_VIDEODRIVER:-dummy}"
+  echo "== starting unitree_mujoco headless (Xvfb, MUJOCO_GL=$MUJOCO_GL)"
   setsid xvfb-run -a -s "-screen 0 1280x720x24" python -u unitree_mujoco.py >"$SIM_LOG" 2>&1 &
 else
   echo "== starting unitree_mujoco with viewer on DISPLAY=${DISPLAY:-unset}"

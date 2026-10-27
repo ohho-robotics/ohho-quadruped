@@ -61,7 +61,7 @@ VALID_README = textwrap.dedent("""\
 
     | Item | Status | Evidence |
     |---|---|---|
-    | Credibility check v2 | Built | [scripts/check_credibility.py](scripts/check_credibility.py) |
+    | CI | Built | [.github/workflows/credibility.yml](.github/workflows/credibility.yml) |
     | Vision item | Vision | planned |
 
     ## Sim only, not hardware-tested
@@ -217,13 +217,13 @@ class TestStatusTable(unittest.TestCase):
         from tempfile import TemporaryDirectory
 
         _BUILT_ROW = (
-            "| Credibility check v2 | Built |"
-            " [scripts/check_credibility.py](scripts/check_credibility.py) |"
+            "| CI | Built | "
+            "[.github/workflows/credibility.yml](.github/workflows/credibility.yml) |"
         )
         with TemporaryDirectory() as tmp:
             readme = VALID_README.replace(
                 _BUILT_ROW,
-                "| Credibility check v2 | Built | no link here |",
+                "| CI | Built | no link here |",
             )
             root = make_repo(Path(tmp), readme=readme)
             self.assertEqual(run_check(cc.check_status_table, root), 1)
@@ -232,13 +232,28 @@ class TestStatusTable(unittest.TestCase):
         from tempfile import TemporaryDirectory
 
         _BUILT_ROW = (
-            "| Credibility check v2 | Built |"
-            " [scripts/check_credibility.py](scripts/check_credibility.py) |"
+            "| CI | Built | "
+            "[.github/workflows/credibility.yml](.github/workflows/credibility.yml) |"
         )
         with TemporaryDirectory() as tmp:
             readme = VALID_README.replace(
                 _BUILT_ROW,
-                "| Credibility check v2 | Built | [nonexistent](does/not/exist.py) |",
+                "| CI | Built | [nonexistent](does/not/exist.py) |",
+            )
+            root = make_repo(Path(tmp), readme=readme)
+            self.assertEqual(run_check(cc.check_status_table, root), 1)
+
+    def test_built_row_without_ci_link_fails(self):
+        from tempfile import TemporaryDirectory
+
+        _BUILT_ROW = (
+            "| CI | Built | "
+            "[.github/workflows/credibility.yml](.github/workflows/credibility.yml) |"
+        )
+        with TemporaryDirectory() as tmp:
+            readme = VALID_README.replace(
+                _BUILT_ROW,
+                "| CI | Built | [AGENTS.md](AGENTS.md) |",
             )
             root = make_repo(Path(tmp), readme=readme)
             self.assertEqual(run_check(cc.check_status_table, root), 1)
@@ -247,16 +262,50 @@ class TestStatusTable(unittest.TestCase):
         from tempfile import TemporaryDirectory
 
         _BUILT_ROW = (
-            "| Credibility check v2 | Built |"
-            " [scripts/check_credibility.py](scripts/check_credibility.py) |"
+            "| CI | Built | "
+            "[.github/workflows/credibility.yml](.github/workflows/credibility.yml) |"
         )
         _HTTPS_ROW = (
-            "| Credibility check v2 | Built |"
-            " https://github.com/ohho-robotics/ohho-quadruped"
-            "/blob/main/scripts/check_credibility.py |"
+            "| CI | Built | "
+            "https://github.com/ohho-robotics/ohho-quadruped/"
+            "blob/main/scripts/check_credibility.py |"
         )
         with TemporaryDirectory() as tmp:
             readme = VALID_README.replace(_BUILT_ROW, _HTTPS_ROW)
+            root = make_repo(Path(tmp), readme=readme)
+            self.assertIsNone(run_check(cc.check_status_table, root))
+
+    def test_hardware_row_not_vision_fails(self):
+        from tempfile import TemporaryDirectory
+        with TemporaryDirectory() as tmp:
+            readme = VALID_README.replace(
+                "| Vision item | Vision | planned |",
+                "| Hardware bring-up | In progress | Vision until Go2 EDU available |",
+            )
+            root = make_repo(Path(tmp), readme=readme)
+            self.assertEqual(run_check(cc.check_status_table, root), 1)
+
+    def test_hardware_row_without_marker_fails(self):
+        from tempfile import TemporaryDirectory
+        with TemporaryDirectory() as tmp:
+            readme = VALID_README.replace(
+                "| Vision item | Vision | planned |",
+                "| Hardware bring-up | Vision | planned |",
+            )
+            root = make_repo(Path(tmp), readme=readme)
+            self.assertEqual(run_check(cc.check_status_table, root), 1)
+
+    def test_hardware_row_valid_passes(self):
+        from tempfile import TemporaryDirectory
+        with TemporaryDirectory() as tmp:
+            hw_row = (
+                "| Hardware bring-up (Go2 EDU, operator present) | Vision | "
+                "Vision until Go2 EDU available |"
+            )
+            readme = VALID_README.replace(
+                "| Vision item | Vision | planned |",
+                hw_row,
+            )
             root = make_repo(Path(tmp), readme=readme)
             self.assertIsNone(run_check(cc.check_status_table, root))
 

@@ -8,13 +8,17 @@ This directory will hold Architecture Decision Records (ADRs) and runbooks.
 
 | ID | Title | Status |
 |---|---|---|
-| 0001 | Unitree Go2: target, sport-mode first, MuJoCo-first sim, safety rules | Proposed (PR #3) |
+| 0001 | Unitree Go2: target, sport-mode first, MuJoCo-first sim, safety rules | Accepted ([0001-unitree-go2.md](adr/0001-unitree-go2.md)) |
+| 0002 | Go2 velocity-policy training stack (scaffold) | Accepted scaffold ([0002-velocity-policy-training-stack.md](adr/0002-velocity-policy-training-stack.md)) |
 
-ADR 0001 is open in PR #3 and has not yet been merged:
+ADR 0001 was merged to main in PR #3:
 https://github.com/ohho-robotics/ohho-quadruped/pull/3
 
-Do **not** create or edit anything under `docs/adr/` on this branch — that
-directory is owned by PR #3 to avoid add/add conflicts.
+## Sibling follow-ups (OHH-133)
+
+See [docs/sibling-followups.md](sibling-followups.md) for required honesty updates in:
+- `ohho-os`: `docs/unitree.md` (planned: sim-tested only, not hardware-tested; domain 0 arming gates; sport-mode allowlist)
+- `site`: `docs/ohho-os/robots.md` (sim-tested only, not hardware-tested; Vision until Go2 EDU available)
 
 ## Runbooks
 
@@ -26,8 +30,12 @@ directory is owned by PR #3 to avoid add/add conflicts.
 | [Evidence template](runbooks/go2-bringup-evidence-template.md) | Blank sheet for that procedure. Measured cells stay empty in git. |
 
 `python scripts/check_bringup_runbook.py` checks those two files offline
-(no DDS import, no socket). Further runbooks (sim setup, later motion)
-are still planned for M1 onward, November 2026.
+(no DDS import, no socket).
+
+Scaffold only (not a finished train): [train-velocity-policy.md](train-velocity-policy.md).
+
+Runbooks for sim setup, hardware arming, and safety procedures will be added
+as each milestone is completed (M1 onward, November 2026).
 
 ## Notes
 
