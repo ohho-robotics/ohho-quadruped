@@ -111,6 +111,11 @@ class TestGo2Description(unittest.TestCase):
         self.assertIn("generate_launch_description", text)
         self.assertIn("robot_state_publisher", text)
         self.assertIn("use_bridge_joint_states", text)
+        self.assertIn("joint_state_publisher_gui", text)
+        self.assertIn("read_text", text)
+        self.assertNotIn("Command(", text)
+        pkg_xml = (_DESC_DIR / "package.xml").read_text(encoding="utf-8")
+        self.assertIn("joint_state_publisher_gui", pkg_xml)
 
     def test_rviz_config_exists(self) -> None:
         rviz_file = _DESC_DIR / "rviz" / "go2.rviz"

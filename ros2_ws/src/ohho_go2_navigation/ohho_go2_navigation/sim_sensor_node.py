@@ -11,13 +11,20 @@ from nav_msgs.msg import Odometry
 from ohho_go2_bridge.domain_guard import require_safe_ros_domain
 from ohho_go2_bridge.velocity_limits import clamp_twist
 from ohho_go2_bridge.watchdog import require_positive_finite_timeout
-from rclpy.clock import Clock
-from rclpy.clock_type import ClockType
 from rclpy.node import Node
 from rclpy.qos import DurabilityPolicy, HistoryPolicy, QoSProfile, ReliabilityPolicy
 from rosgraph_msgs.msg import Clock as ClockMsg
 from sensor_msgs.msg import BatteryState, JointState, LaserScan
+from std_msgs.msg import Empty
 from tf2_ros import TransformBroadcaster
+
+try:
+    # Humble defines ClockType in rclpy.clock. Jazzy re-exports it from there
+    # and also provides rclpy.clock_type.
+    from rclpy.clock import Clock, ClockType
+except ImportError:
+    from rclpy.clock import Clock
+    from rclpy.clock_type import ClockType
 
 from ohho_go2_navigation.sim_kinematics import (
     GO2_JOINT_NAMES,
@@ -28,6 +35,7 @@ from ohho_go2_navigation.sim_kinematics import (
     SCAN_RANGE_MIN_M,
     SCAN_READINGS,
     SimKinematics,
+    sensor_timer_period_sec,
 )
 
 # Matches the /clock subscription inside rcl (best effort, volatile, depth 1).
@@ -52,6 +60,7 @@ class Go2SimSensorNode(Node):
         self.declare_parameter("watchdog_timeout_sec", 0.3)
 
         rate_hz = self.get_parameter("sim_sensor_rate_hz").get_parameter_value().double_value
+        period = sensor_timer_period_sec(rate_hz)
         self._timeout_s = require_positive_finite_timeout(
             self.get_parameter("watchdog_timeout_sec").get_parameter_value().double_value
         )
@@ -60,6 +69,7 @@ class Go2SimSensorNode(Node):
         self._sim_origin_s = time.monotonic()
 
         self.create_subscription(Twist, "/cmd_vel", self._on_cmd_vel, 10)
+        self.create_subscription(Empty, "/ohho/estop", self._on_estop, 10)
         self._odom_pub = self.create_publisher(Odometry, "/odom", 10)
         self._joint_pub = self.create_publisher(JointState, "/joint_states", 10)
         self._battery_pub = self.create_publisher(BatteryState, "/battery", 10)
@@ -73,7 +83,6 @@ class Go2SimSensorNode(Node):
             self._clock_pub = self.create_publisher(ClockMsg, "/clock", _CLOCK_QOS)
             self._publish_clock()
 
-        period = 1.0 / max(rate_hz, 1.0)
         # System time, not ROS time: a sim-time timer would never fire until
         # /clock is already advancing.
         self.create_timer(period, self._on_timer, clock=self._wall_clock)
@@ -84,8 +93,14 @@ class Go2SimSensorNode(Node):
         )
 
     def _on_cmd_vel(self, msg: Twist) -> None:
+        if self._kin.estop_latched:
+            return
         vx, vy, vyaw, _clamped = clamp_twist(msg.linear.x, msg.linear.y, msg.angular.z)
         self._kin.set_body_velocity(vx, vy, vyaw, time.monotonic())
+
+    def _on_estop(self, _msg: Empty) -> None:
+        self._kin.latch_estop()
+        self.get_logger().error("E-stop latched; simulated velocity cleared")
 
     def _on_timer(self) -> None:
         now = time.monotonic()

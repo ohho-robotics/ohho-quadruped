@@ -17,6 +17,8 @@ jobs:
       ROS_LOCALHOST_ONLY: "1"
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
       - name: Install workspace ROS dependencies
         shell: bash
         run: bash scripts/ci/install-humble-ws-deps-container.sh
@@ -33,16 +35,38 @@ jobs:
           source ros2_ws/install/setup.bash
           export ROS2CLI_DISABLE_DAEMON=1
           ros2 daemon stop 2>/dev/null || true
-          ros2 run ohho_go2_bridge go2_bridge_node &
+          ros2 run ohho_go2_bridge go2_bridge_node > /tmp/go2_bridge_smoke.log 2>&1 &
           bridge_pid=$!
-          ros2 run ohho_go2_navigation go2_sim_sensor_node &
+          ros2 run ohho_go2_navigation go2_sim_sensor_node > /tmp/go2_sim_sensor_smoke.log 2>&1 &
           sim_pid=$!
-          sleep 5
-          kill -0 "$bridge_pid"
-          kill -0 "$sim_pid"
-          ros2 topic list | grep -q /odom
-          ros2 topic list | grep -q /scan
-          ros2 topic list | grep -q /joint_states
+          deadline=$((SECONDS + 20))
+          ready=0
+          while [ "$SECONDS" -lt "$deadline" ]; do
+            if ! kill -0 "$bridge_pid" 2>/dev/null || ! kill -0 "$sim_pid" 2>/dev/null; then
+              echo "bridge or sim sensor exited before required topics appeared"
+              echo "----- bridge log -----"
+              cat /tmp/go2_bridge_smoke.log || true
+              echo "----- sim sensor log -----"
+              cat /tmp/go2_sim_sensor_smoke.log || true
+              exit 1
+            fi
+            topics=$(timeout 5 ros2 topic list 2>/dev/null || true)
+            if echo "$topics" | grep -qx "/odom" \
+              && echo "$topics" | grep -qx "/scan" \
+              && echo "$topics" | grep -qx "/joint_states"; then
+              ready=1
+              break
+            fi
+            sleep 1
+          done
+          if [ "$ready" -ne 1 ]; then
+            echo "timed out waiting for /odom /scan /joint_states"
+            echo "----- bridge log -----"
+            cat /tmp/go2_bridge_smoke.log || true
+            echo "----- sim sensor log -----"
+            cat /tmp/go2_sim_sensor_smoke.log || true
+            exit 1
+          fi
           kill "$bridge_pid" "$sim_pid" || true
       - name: Headless launch-test (~60s)
         shell: bash
