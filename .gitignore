@@ -36,3 +36,10 @@ Thumbs.db
 ros2_ws/build/
 ros2_ws/install/
 ros2_ws/log/
+
+# CI / local Unitree stack (OHH-124)
+artifacts/
+.unitree/
+
+# Local upstream clones for dev / agent sessions (not committed)
+.tmp-unitree_mujoco/
