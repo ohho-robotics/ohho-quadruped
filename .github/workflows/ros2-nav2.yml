@@ -4,6 +4,9 @@ on:
   push:
   pull_request:
 
+permissions:
+  contents: read
+
 jobs:
   nav2-headless-launch-test:
     runs-on: ubuntu-22.04
@@ -13,7 +16,7 @@ jobs:
       ROS_DOMAIN_ID: "1"
       ROS_LOCALHOST_ONLY: "1"
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
       - name: Install workspace ROS dependencies
         shell: bash
         run: bash scripts/ci/install-humble-ws-deps-container.sh

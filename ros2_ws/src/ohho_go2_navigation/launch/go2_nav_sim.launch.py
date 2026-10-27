@@ -4,7 +4,7 @@ All-in-one Go2 simulation, bridge, SLAM, and Nav2 bringup.
 Launches:
 1. go2_description (robot_state_publisher)
 2. ohho_go2_bridge (/cmd_vel sport mock)
-3. sim-only kinematic sensors when use_mock_sim:=true (/odom, /scan, /joint_states, TF)
+3. sim-only kinematic sensors when use_mock_sim:=true (/odom, /scan, /joint_states, TF, /clock)
 4. slam_toolbox (online async 2D mapping from /scan)
 5. Nav2 (planner, controller, smoother, recoveries, BT navigator)
 6. RViz2 (when headless:=false)
@@ -26,7 +26,7 @@ from launch.actions import (
 )
 from launch.conditions import IfCondition, UnlessCondition
 from launch.launch_description_sources import PythonLaunchDescriptionSource
-from launch.substitutions import LaunchConfiguration
+from launch.substitutions import LaunchConfiguration, PythonExpression
 from launch_ros.actions import Node
 from launch_ros.parameter_descriptions import ParameterValue
 
@@ -43,6 +43,14 @@ def _find_desc_package_dir() -> Path:
         return Path(get_package_share_directory("go2_description"))
     except (PackageNotFoundError, Exception):
         return Path(__file__).resolve().parents[2] / "go2_description"
+
+
+def _find_repo_root() -> Path | None:
+    """Directory that contains sim/run_go2.py, independent of the launch cwd."""
+    for parent in Path(__file__).resolve().parents:
+        if (parent / "sim" / "run_go2.py").is_file():
+            return parent
+    return None
 
 
 def generate_launch_description() -> LaunchDescription:
@@ -67,7 +75,11 @@ def generate_launch_description() -> LaunchDescription:
     sim_time_arg = DeclareLaunchArgument(
         "use_sim_time",
         default_value="true",
-        description="Use simulation time if true",
+        description=(
+            "Use simulation time on the mock path. go2_sim_sensor_node publishes "
+            "/clock when this is true. sim/run_go2.py does not publish /clock, so "
+            "sim time is forced off when use_mock_sim is false."
+        ),
     )
     headless_arg = DeclareLaunchArgument(
         "headless",
@@ -105,20 +117,41 @@ def generate_launch_description() -> LaunchDescription:
         description="Autostart Nav2 lifecycle stack",
     )
 
-    # Enforce safe ROS domain (domain 1 for sim, never 0)
-    domain_env = SetEnvironmentVariable(
-        "ROS_DOMAIN_ID",
-        os.environ.get("ROS_DOMAIN_ID", "1") or "1",
-    )
+    # Enforce safe ROS domain (domain 1 for sim, never 0). Nav2's controller
+    # has no domain guard, so reject domain 0 before any node starts.
+    raw_domain = (os.environ.get("ROS_DOMAIN_ID") or "1").strip()
+    domain_id = raw_domain or "1"
+    try:
+        domain_is_zero = int(domain_id, 10) == 0
+    except ValueError:
+        domain_is_zero = False
+    if domain_is_zero:
+        raise RuntimeError(
+            "ROS_DOMAIN_ID=0 is not allowed for simulation; use 1 or higher"
+        )
+    domain_env = SetEnvironmentVariable("ROS_DOMAIN_ID", domain_id)
     localhost_env = SetEnvironmentVariable(
         "ROS_LOCALHOST_ONLY",
         os.environ.get("ROS_LOCALHOST_ONLY", "1") or "1",
     )
 
+    # Mock path can publish /clock. The MuJoCo process cannot, so do not
+    # ask Nav2 or SLAM to wait on sim time in that mode.
+    effective_use_sim_time = PythonExpression(
+        [
+            "'true' if '",
+            use_mock_sim,
+            "'.lower() in ('true', '1') and '",
+            use_sim_time,
+            "'.lower() in ('true', '1') else 'false'",
+        ]
+    )
+
     # 1. Robot description (robot_state_publisher)
-    urdf_content = ""
-    if Path(default_urdf).exists():
-        urdf_content = Path(default_urdf).read_text(encoding="utf-8")
+    urdf_path = Path(default_urdf)
+    if not urdf_path.exists():
+        raise FileNotFoundError(f"go2_description URDF not found: {urdf_path}")
+    urdf_content = urdf_path.read_text(encoding="utf-8")
 
     rsp_node = Node(
         package="robot_state_publisher",
@@ -128,7 +161,7 @@ def generate_launch_description() -> LaunchDescription:
         parameters=[
             {
                 "robot_description": ParameterValue(urdf_content, value_type=str),
-                "use_sim_time": use_sim_time,
+                "use_sim_time": effective_use_sim_time,
             }
         ],
     )
@@ -143,7 +176,7 @@ def generate_launch_description() -> LaunchDescription:
             {
                 "use_mock_transport": True,
                 "watchdog_timeout_sec": 0.3,
-                "use_sim_time": ParameterValue(use_sim_time, value_type=bool),
+                "use_sim_time": ParameterValue(effective_use_sim_time, value_type=bool),
             }
         ],
     )
@@ -158,7 +191,7 @@ def generate_launch_description() -> LaunchDescription:
             {
                 "sim_sensor_rate_hz": 20.0,
                 "watchdog_timeout_sec": 0.3,
-                "use_sim_time": ParameterValue(use_sim_time, value_type=bool),
+                "use_sim_time": ParameterValue(effective_use_sim_time, value_type=bool),
             }
         ],
         condition=IfCondition(use_mock_sim),
@@ -172,7 +205,7 @@ def generate_launch_description() -> LaunchDescription:
         output="screen",
         parameters=[
             slam_params_file,
-            {"use_sim_time": ParameterValue(use_sim_time, value_type=bool)},
+            {"use_sim_time": ParameterValue(effective_use_sim_time, value_type=bool)},
         ],
     )
 
@@ -180,7 +213,7 @@ def generate_launch_description() -> LaunchDescription:
     nav2_launch = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(str(nav_pkg / "launch" / "nav2.launch.py")),
         launch_arguments={
-            "use_sim_time": use_sim_time,
+            "use_sim_time": effective_use_sim_time,
             "params_file": nav2_params_file,
             "autostart": autostart,
         }.items(),
@@ -193,13 +226,29 @@ def generate_launch_description() -> LaunchDescription:
         name="rviz2",
         output="screen",
         arguments=["-d", rviz_config],
-        parameters=[{"use_sim_time": use_sim_time}],
+        parameters=[{"use_sim_time": effective_use_sim_time}],
         condition=UnlessCondition(headless),
     )
 
-    # 6. Optional MuJoCo simulation process (when use_mock_sim is false)
+    # 6. Optional MuJoCo simulation process (when use_mock_sim is false).
+    # Resolve the script from the repository root so `ros2 launch` need not
+    # be started there. This process does not publish ROS /scan or /odom.
+    repo_root = _find_repo_root()
+    if repo_root is None:
+        mujoco_cmd = ["python3", "sim/run_go2.py", "--scene", scene, "--headless"]
+        mujoco_cwd = None
+    else:
+        mujoco_cmd = [
+            "python3",
+            str(repo_root / "sim" / "run_go2.py"),
+            "--scene",
+            scene,
+            "--headless",
+        ]
+        mujoco_cwd = str(repo_root)
     mujoco_sim_proc = ExecuteProcess(
-        cmd=["python3", "sim/run_go2.py", "--scene", scene, "--headless"],
+        cmd=mujoco_cmd,
+        cwd=mujoco_cwd,
         output="screen",
         condition=UnlessCondition(use_mock_sim),
     )

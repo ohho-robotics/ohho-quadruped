@@ -45,6 +45,9 @@ class TestNavSimLaunch(unittest.TestCase):
         self.assertNotIn("publish_sim_sensors", text)
         self.assertIn("slam_toolbox", text)
         self.assertIn("nav2.launch.py", text)
+        self.assertIn("ROS_DOMAIN_ID=0 is not allowed for simulation", text)
+        self.assertIn("go2_description URDF not found", text)
+        self.assertIn("sim/run_go2.py", text)
 
     def test_nav2_launch_syntax(self) -> None:
         launch_file = _NAV_DIR / "launch" / "nav2.launch.py"

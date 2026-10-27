@@ -5,11 +5,17 @@ from __future__ import annotations
 import time
 
 import rclpy
+from builtin_interfaces.msg import Time
 from geometry_msgs.msg import TransformStamped, Twist
 from nav_msgs.msg import Odometry
 from ohho_go2_bridge.domain_guard import require_safe_ros_domain
 from ohho_go2_bridge.velocity_limits import clamp_twist
+from ohho_go2_bridge.watchdog import require_positive_finite_timeout
+from rclpy.clock import Clock
+from rclpy.clock_type import ClockType
 from rclpy.node import Node
+from rclpy.qos import DurabilityPolicy, HistoryPolicy, QoSProfile, ReliabilityPolicy
+from rosgraph_msgs.msg import Clock as ClockMsg
 from sensor_msgs.msg import BatteryState, JointState, LaserScan
 from tf2_ros import TransformBroadcaster
 
@@ -24,9 +30,21 @@ from ohho_go2_navigation.sim_kinematics import (
     SimKinematics,
 )
 
+# Matches the /clock subscription inside rcl (best effort, volatile, depth 1).
+_CLOCK_QOS = QoSProfile(
+    history=HistoryPolicy.KEEP_LAST,
+    depth=1,
+    reliability=ReliabilityPolicy.BEST_EFFORT,
+    durability=DurabilityPolicy.VOLATILE,
+)
+
 
 class Go2SimSensorNode(Node):
-    """Publish /odom, /scan, /joint_states, /battery, and odom->base_link TF."""
+    """Publish /odom, /scan, /joint_states, /battery, and odom->base_link TF.
+
+    When ``use_sim_time`` is true, also publish ``/clock`` from a wall-time
+    timer so other nodes' ROS-time timers can advance.
+    """
 
     def __init__(self) -> None:
         super().__init__("go2_sim_sensors")
@@ -34,10 +52,12 @@ class Go2SimSensorNode(Node):
         self.declare_parameter("watchdog_timeout_sec", 0.3)
 
         rate_hz = self.get_parameter("sim_sensor_rate_hz").get_parameter_value().double_value
-        self._timeout_s = (
+        self._timeout_s = require_positive_finite_timeout(
             self.get_parameter("watchdog_timeout_sec").get_parameter_value().double_value
         )
         self._kin = SimKinematics()
+        self._wall_clock = Clock(clock_type=ClockType.SYSTEM_TIME)
+        self._sim_origin_s = time.monotonic()
 
         self.create_subscription(Twist, "/cmd_vel", self._on_cmd_vel, 10)
         self._odom_pub = self.create_publisher(Odometry, "/odom", 10)
@@ -45,12 +65,22 @@ class Go2SimSensorNode(Node):
         self._battery_pub = self.create_publisher(BatteryState, "/battery", 10)
         self._scan_pub = self.create_publisher(LaserScan, "/scan", 10)
         self._tf_broadcaster = TransformBroadcaster(self)
+        if not self.has_parameter("use_sim_time"):
+            # Launch passes this as an override; declare so the override is visible.
+            self.declare_parameter("use_sim_time", False)
+        self._clock_pub = None
+        if bool(self.get_parameter("use_sim_time").get_parameter_value().bool_value):
+            self._clock_pub = self.create_publisher(ClockMsg, "/clock", _CLOCK_QOS)
+            self._publish_clock()
 
         period = 1.0 / max(rate_hz, 1.0)
-        self.create_timer(period, self._on_timer)
+        # System time, not ROS time: a sim-time timer would never fire until
+        # /clock is already advancing.
+        self.create_timer(period, self._on_timer, clock=self._wall_clock)
+        clock_note = " Publishing /clock." if self._clock_pub is not None else ""
         self.get_logger().info(
             f"Sim-only sensors at {rate_hz:.1f} Hz "
-            "(/odom, /scan, /joint_states, /battery, TF). Not hardware."
+            f"(/odom, /scan, /joint_states, /battery, TF).{clock_note} Not hardware."
         )
 
     def _on_cmd_vel(self, msg: Twist) -> None:
@@ -64,8 +94,31 @@ class Go2SimSensorNode(Node):
         dt = self._kin.integrate(now)
         self._publish(dt)
 
+    def _sim_time_msg(self) -> Time:
+        """Sim time starts at zero and advances with the wall clock."""
+        elapsed_ns = int((time.monotonic() - self._sim_origin_s) * 1_000_000_000)
+        if elapsed_ns < 0:
+            elapsed_ns = 0
+        stamp = Time()
+        stamp.sec = int(elapsed_ns // 1_000_000_000)
+        stamp.nanosec = int(elapsed_ns % 1_000_000_000)
+        return stamp
+
+    def _publish_clock(self) -> None:
+        if self._clock_pub is None:
+            return
+        msg = ClockMsg()
+        msg.clock = self._sim_time_msg()
+        self._clock_pub.publish(msg)
+
     def _publish(self, dt: float) -> None:
-        stamp = self.get_clock().now().to_msg()
+        if self._clock_pub is not None:
+            stamp = self._sim_time_msg()
+            clock_msg = ClockMsg()
+            clock_msg.clock = stamp
+            self._clock_pub.publish(clock_msg)
+        else:
+            stamp = self.get_clock().now().to_msg()
         qz, qw = self._kin.yaw_quaternion()
 
         odom = Odometry()

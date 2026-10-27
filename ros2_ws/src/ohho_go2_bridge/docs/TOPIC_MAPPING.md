@@ -17,6 +17,8 @@ for when the transport is wired.
 | `/ohho/estop` | `std_msgs/Empty` | Subscribe | Latched stop: `StopMove` first; full stack adds human-only `release_stop` |
 | `/ohho/mode` | `std_msgs/String` | Subscribe | Allowlisted stand/lie modes → `stand_up`, `stand_down`, `balance_stand`, `recovery_stand`, `sit`, `rise_sit` |
 
+`Go2BridgeNode` implements the subscribe rows (`/cmd_vel`, `/ohho/estop`, `/ohho/mode`). The publish and broadcast rows (`/odom`, TF `odom` → `base_link`, `/joint_states`, `/battery`, `/scan`) are future mappings: this node declares those publishers and does not publish samples, and it creates no TF broadcaster. The sim-only sensor node in `ohho_go2_navigation` publishes that data in Nav2 launches.
+
 ## Unitree DDS topics (future transport)
 
 | DDS / ROS (unitree_ros2) | Bridge use |

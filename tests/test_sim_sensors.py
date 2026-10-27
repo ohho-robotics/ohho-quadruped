@@ -16,6 +16,7 @@ from ohho_go2_navigation.sim_kinematics import (  # noqa: E402
     GO2_STAND_POSITIONS,
     SCAN_READINGS,
     SimKinematics,
+    room_scan_ranges,
 )
 
 
@@ -53,6 +54,11 @@ class TestSimKinematics(unittest.TestCase):
         # Beam along +x (index 90 of 180) reaches the wall at x = +3 m.
         self.assertAlmostEqual(ranges[90], 3.0)
 
+    def test_scan_near_wall_reports_far_wall_beyond_five_metres(self) -> None:
+        # At x=-2.5 the +x beam hits the wall at +3 m (5.5 m), not a 5 m cap.
+        ranges = room_scan_ranges(-2.5, 0.0, 0.0)
+        self.assertAlmostEqual(ranges[90], 5.5)
+
     def test_stand_pose_matches_joint_names(self) -> None:
         self.assertEqual(len(GO2_JOINT_NAMES), 12)
         self.assertEqual(len(GO2_STAND_POSITIONS), len(GO2_JOINT_NAMES))
@@ -70,7 +76,7 @@ class TestSimSensorPackage(unittest.TestCase):
             text,
         )
 
-    def test_sensor_node_source_has_no_printf_logs(self) -> None:
+    def test_sensor_node_source_is_valid_and_has_no_placeholder(self) -> None:
         source = (_NAV_SRC / "ohho_go2_navigation" / "sim_sensor_node.py").read_text(
             encoding="utf-8"
         )

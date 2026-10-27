@@ -50,8 +50,35 @@ cleanup() {
 }
 trap cleanup EXIT
 
-echo "==> Waiting up to 60s for nodes and topics..."
+echo "==> Waiting up to 60s for topics, slam_toolbox, and active Nav2 lifecycle nodes..."
 SUCCESS=0
+
+# Topics from the sim sensor node are not enough: slam_toolbox must be running
+# and each Nav2 lifecycle server must be active.
+stack_ready() {
+  local topics nodes name state
+  topics=$(ros2 topic list 2>/dev/null || true)
+  echo "$topics" | grep -qx "/odom" || return 1
+  echo "$topics" | grep -qx "/scan" || return 1
+  echo "$topics" | grep -qx "/joint_states" || return 1
+
+  nodes=$(ros2 node list 2>/dev/null || true)
+  echo "$nodes" | grep -qx "/slam_toolbox" || return 1
+
+  for name in \
+    controller_server \
+    smoother_server \
+    planner_server \
+    behavior_server \
+    bt_navigator \
+    waypoint_follower
+  do
+    echo "$nodes" | grep -qx "/${name}" || return 1
+    state=$(ros2 lifecycle get "/${name}" 2>/dev/null || true)
+    # Match the state word only. "inactive" must not count as active.
+    echo "$state" | grep -qiw "active" || return 1
+  done
+}
 for i in $(seq 1 60); do
   sleep 1
   if ! kill -0 "$LAUNCH_PID" 2>/dev/null; then
@@ -60,12 +87,8 @@ for i in $(seq 1 60); do
     exit 1
   fi
 
-  TOPICS=$(ros2 topic list 2>/dev/null || true)
-  if echo "$TOPICS" | grep -q "/odom" && \
-     echo "$TOPICS" | grep -q "/scan" && \
-     echo "$TOPICS" | grep -q "/joint_states"; then
-    echo "Required topics found at iteration $i:"
-    echo "  /odom, /scan, /joint_states active"
+  if stack_ready; then
+    echo "Required topics, slam_toolbox, and active Nav2 lifecycle nodes at iteration $i"
     SUCCESS=1
     break
   fi
@@ -75,7 +98,7 @@ if [ "$SUCCESS" -eq 1 ]; then
   echo "==> Headless launch test passed successfully!"
   exit 0
 else
-  echo "==> Timed out waiting for ROS 2 topics. Log tail:"
+  echo "==> Timed out waiting for topics, slam_toolbox, or active Nav2 lifecycle nodes. Log tail:"
   tail -n 100 "$LOGFILE" || true
   exit 1
 fi

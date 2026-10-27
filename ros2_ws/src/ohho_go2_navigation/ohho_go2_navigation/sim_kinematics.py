@@ -97,7 +97,7 @@ def room_scan_ranges(
         angle = SCAN_ANGLE_MIN + i * angle_increment + yaw
         cos_a = math.cos(angle)
         sin_a = math.sin(angle)
-        distance = 5.0
+        distance = range_max
         if abs(cos_a) > 1e-3:
             dx = (room_half - x if cos_a > 0 else -room_half - x) / cos_a
             if dx > 0:

@@ -26,7 +26,7 @@ from ohho_go2_bridge.transport import (
     SportTransport,
     resolve_sport_transport,
 )
-from ohho_go2_bridge.watchdog import CmdVelWatchdog
+from ohho_go2_bridge.watchdog import CmdVelWatchdog, require_positive_finite_timeout
 
 
 class Go2BridgeNode(Node):
@@ -36,7 +36,9 @@ class Go2BridgeNode(Node):
         self.declare_parameter("watchdog_timeout_sec", 0.3)
 
         use_mock = self.get_parameter("use_mock_transport").get_parameter_value().bool_value
-        timeout = self.get_parameter("watchdog_timeout_sec").get_parameter_value().double_value
+        timeout = require_positive_finite_timeout(
+            self.get_parameter("watchdog_timeout_sec").get_parameter_value().double_value
+        )
 
         self._transport, refused_real = resolve_sport_transport(
             transport,

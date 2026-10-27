@@ -16,7 +16,7 @@ _SKIP_DIRS = frozenset(
 def _iter_python_files() -> list[Path]:
     files: list[Path] = []
     for path in _REPO_ROOT.rglob("*.py"):
-        if any(part in _SKIP_DIRS for part in path.parts):
+        if any(part in _SKIP_DIRS for part in path.relative_to(_REPO_ROOT).parts):
             continue
         files.append(path)
     return files

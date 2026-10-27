@@ -1,7 +1,10 @@
 """
 Launch robot_state_publisher and RViz for Unitree Go2.
 
-Connects robot_state_publisher to /joint_states (published by ohho_go2_bridge).
+robot_state_publisher listens on /joint_states. ohho_go2_bridge declares that
+topic but does not publish samples. The sim-only sensor node in
+ohho_go2_navigation publishes it in Nav2 launches. Set
+use_bridge_joint_states:=false to run joint_state_publisher for an offline preview.
 """
 
 from __future__ import annotations
@@ -49,7 +52,12 @@ def generate_launch_description() -> LaunchDescription:
     bridge_joints_arg = DeclareLaunchArgument(
         "use_bridge_joint_states",
         default_value="true",
-        description="Expect /joint_states from ohho_go2_bridge; false for offline JSP",
+        description=(
+            "If true, do not start joint_state_publisher. /joint_states must come "
+            "from another node. ohho_go2_bridge does not publish samples; the "
+            "sim-only sensor node in ohho_go2_navigation does in Nav2 launches. "
+            "Set false for offline joint sliders."
+        ),
     )
     rviz_arg = DeclareLaunchArgument(
         "rviz",
@@ -68,7 +76,8 @@ def generate_launch_description() -> LaunchDescription:
         value_type=str,
     )
 
-    # robot_state_publisher receives /joint_states from ohho_go2_bridge
+    # robot_state_publisher subscribes to /joint_states. This launch does not
+    # publish them when use_bridge_joint_states is true.
     robot_state_pub_node = Node(
         package="robot_state_publisher",
         executable="robot_state_publisher",
@@ -82,7 +91,7 @@ def generate_launch_description() -> LaunchDescription:
         ],
     )
 
-    # Offline fallback if bridge is not publishing /joint_states
+    # Offline joint sliders. Not used when another node is expected to publish.
     joint_state_pub_node = Node(
         package="joint_state_publisher",
         executable="joint_state_publisher",
