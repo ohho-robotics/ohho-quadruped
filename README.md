@@ -25,13 +25,15 @@ https://github.com/ohho-robotics/ohho-quadruped/pull/3
 | Unitree Go2 EDU in MuJoCo sim (unitree_mujoco, sport shim) | Vision | planned, from November 2026 |
 | ROS 2 bridge (Humble, Jazzy best-effort) | In progress | [ros2_ws/src/ohho_go2_bridge/](ros2_ws/src/ohho_go2_bridge/), [.github/workflows/ros2-bridge.yml](.github/workflows/ros2-bridge.yml) |
 | Go2 description + RViz + Nav2 params (OHH-132) | In progress | [ros2_ws/src/go2_description/](ros2_ws/src/go2_description/), [ros2_ws/src/ohho_go2_navigation/](ros2_ws/src/ohho_go2_navigation/) |
-| Hardware bring-up (Go2 EDU, operator present) | Vision | Vision until Go2 EDU available |
+| Go2 Gazebo visual spawn (sim only, no gait controller) | In progress | [ros2_ws/src/go2_description/launch/gazebo.launch.py](ros2_ws/src/go2_description/launch/gazebo.launch.py), [docs/evidence/ohh-65.md](docs/evidence/ohh-65.md) |
+| Hardware bring-up (Go2 EDU, operator present) | Vision | Vision until Go2 EDU available. Planned and gated on OHH-135 |
 
 ## Sim only, not hardware-tested
 
 Nothing in this repository has been tested on hardware.
 No hardware commands are run from any agent session.
 Hardware bring-up is gated on a physical Go2 EDU and an operator being present (OHH-135).
+The Go2 Gazebo visual spawn is sim only, no gait controller.
 
 ### Quickstart (sim)
 
@@ -72,7 +74,7 @@ bash scripts/check-credibility.sh
 ohho_go2/                         Python package: sport shim + sim helpers (planned, November 2026); policy scaffold (OHH-122)
 sim/                              Go2 sim launcher + OhhO scenes (see sim/README.md)
 ros2_ws/src/ohho_go2_bridge/      ROS 2 Humble bridge (scaffold; mock transport)
-ros2_ws/src/go2_description/      Go2 URDF, meshes, and RViz display launch
+ros2_ws/src/go2_description/      Go2 URDF, meshes, RViz display, and Gazebo visual spawn
 ros2_ws/src/ohho_go2_navigation/  Nav2 params, SLAM toolbox, sim-only sensors, and all-in-one sim launch
 docs/                             ADRs, runbooks, and sibling follow-ups (ADR 0001 accepted; ADR 0002 velocity-policy scaffold)
 scripts/                          Credibility check v2

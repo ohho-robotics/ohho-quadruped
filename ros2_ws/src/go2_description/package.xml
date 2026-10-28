@@ -3,7 +3,7 @@
 <package format="3">
   <name>go2_description</name>
   <version>1.0.0</version>
-  <description>URDF and mesh description package for Unitree Go2 (vendored BSD-3 from unitreerobotics/unitree_ros).</description>
+  <description>URDF and mesh description for the Go2. Sim only, no gait controller. Vendored BSD-3 from unitreerobotics/unitree_ros.</description>
   <maintainer email="dev@ohho-robotics.com">OhhO Robotics</maintainer>
   <license>BSD-3-Clause</license>
 
@@ -12,6 +12,8 @@
   <exec_depend>robot_state_publisher</exec_depend>
   <exec_depend>joint_state_publisher</exec_depend>
   <exec_depend>joint_state_publisher_gui</exec_depend>
+  <exec_depend>ros_gz_sim</exec_depend>
+  <exec_depend>ros_gz_bridge</exec_depend>
   <exec_depend>rviz2</exec_depend>
   <exec_depend>xacro</exec_depend>
   <exec_depend>urdf</exec_depend>

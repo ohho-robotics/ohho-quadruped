@@ -1,10 +1,11 @@
 """
-Launch robot_state_publisher and RViz for Unitree Go2.
+Launch robot_state_publisher and RViz for the Go2 description.
 
-robot_state_publisher listens on /joint_states. ohho_go2_bridge declares that
-topic but does not publish samples. The sim-only sensor node in
-ohho_go2_navigation publishes it in Nav2 launches. Set
-use_bridge_joint_states:=false to run joint_state_publisher_gui for offline sliders.
+Sim only, no gait controller. robot_state_publisher listens on /joint_states.
+ohho_go2_bridge declares that topic but does not publish samples. The sim-only
+sensor node in ohho_go2_navigation publishes it in Nav2 launches. Set
+use_bridge_joint_states:=false for offline joint states, and
+use_joint_state_publisher_gui:=true for the slider GUI.
 """
 
 from __future__ import annotations
@@ -14,8 +15,8 @@ from pathlib import Path
 from ament_index_python.packages import PackageNotFoundError, get_package_share_directory
 from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument, OpaqueFunction
-from launch.conditions import IfCondition, UnlessCondition
-from launch.substitutions import LaunchConfiguration
+from launch.conditions import IfCondition
+from launch.substitutions import LaunchConfiguration, PythonExpression
 from launch_ros.actions import Node
 from launch_ros.parameter_descriptions import ParameterValue
 
@@ -35,6 +36,7 @@ def generate_launch_description() -> LaunchDescription:
 
     use_sim_time = LaunchConfiguration("use_sim_time")
     use_bridge_joint_states = LaunchConfiguration("use_bridge_joint_states")
+    use_jsp_gui = LaunchConfiguration("use_joint_state_publisher_gui")
     rviz = LaunchConfiguration("rviz")
     rviz_config = LaunchConfiguration("rviz_config")
 
@@ -56,6 +58,14 @@ def generate_launch_description() -> LaunchDescription:
             "from another node. ohho_go2_bridge does not publish samples; the "
             "sim-only sensor node in ohho_go2_navigation does in Nav2 launches. "
             "Set false for offline joint sliders."
+        ),
+    )
+    jsp_gui_arg = DeclareLaunchArgument(
+        "use_joint_state_publisher_gui",
+        default_value="false",
+        description=(
+            "When use_bridge_joint_states is false, launch joint_state_publisher_gui "
+            "instead of joint_state_publisher"
         ),
     )
     rviz_arg = DeclareLaunchArgument(
@@ -91,14 +101,45 @@ def generate_launch_description() -> LaunchDescription:
             )
         ]
 
-    # Offline joint sliders. Not used when another node publishes /joint_states.
+    # Offline fallback when no other node publishes /joint_states.
+    # The GUI publisher is optional and is not started together with the plain one.
+    offline_plain = IfCondition(
+        PythonExpression(
+            [
+                "'",
+                use_bridge_joint_states,
+                "'.lower() == 'false' and '",
+                use_jsp_gui,
+                "'.lower() == 'false'",
+            ]
+        )
+    )
+    offline_gui = IfCondition(
+        PythonExpression(
+            [
+                "'",
+                use_bridge_joint_states,
+                "'.lower() == 'false' and '",
+                use_jsp_gui,
+                "'.lower() == 'true'",
+            ]
+        )
+    )
     joint_state_pub_node = Node(
+        package="joint_state_publisher",
+        executable="joint_state_publisher",
+        name="joint_state_publisher",
+        output="screen",
+        parameters=[{"use_sim_time": use_sim_time}],
+        condition=offline_plain,
+    )
+    joint_state_pub_gui_node = Node(
         package="joint_state_publisher_gui",
         executable="joint_state_publisher_gui",
         name="joint_state_publisher_gui",
         output="screen",
         parameters=[{"use_sim_time": use_sim_time}],
-        condition=UnlessCondition(use_bridge_joint_states),
+        condition=offline_gui,
     )
 
     rviz_node = Node(
@@ -116,10 +157,12 @@ def generate_launch_description() -> LaunchDescription:
             urdf_arg,
             sim_time_arg,
             bridge_joints_arg,
+            jsp_gui_arg,
             rviz_arg,
             rviz_config_arg,
             OpaqueFunction(function=_robot_state_publisher),
             joint_state_pub_node,
+            joint_state_pub_gui_node,
             rviz_node,
         ]
     )
