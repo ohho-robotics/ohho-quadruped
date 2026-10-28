@@ -32,7 +32,8 @@ ros2 launch ohho_go2_navigation go2_nav_sim.launch.py
 
 Options:
 - `headless:=true` — disables RViz2 (for CI and headless containers)
-- `use_mock_sim:=true` — runs the sim-only kinematic sensor node (not hardware; MuJoCo is not required)
+- `use_mock_sim:=true` — runs the sim-only kinematic sensor node (not hardware; MuJoCo is not required). With `use_sim_time:=true` (the default) that node publishes `/clock`.
+- `use_mock_sim:=false` — starts `sim/run_go2.py` from the repository root. That process does not publish ROS `/clock`, `/scan`, or `/odom`, so the launch forces `use_sim_time` off. Mapping still needs a ROS sensor source; the mock sensor node is the one that publishes those topics.
 - `scene:=office` — MuJoCo environment scene (when `use_mock_sim:=false`)
 
 ## MuJoCo Office Evaluation Status

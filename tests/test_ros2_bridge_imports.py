@@ -22,7 +22,10 @@ from ohho_go2_bridge.transport import (  # noqa: E402
     resolve_sport_transport,
 )
 from ohho_go2_bridge.velocity_limits import clamp_twist  # noqa: E402
-from ohho_go2_bridge.watchdog import CmdVelWatchdog  # noqa: E402
+from ohho_go2_bridge.watchdog import (  # noqa: E402
+    CmdVelWatchdog,
+    require_positive_finite_timeout,
+)
 
 
 class TestVelocityClamp(unittest.TestCase):
@@ -37,6 +40,19 @@ class TestVelocityClamp(unittest.TestCase):
         lx, ly, az, clamped = clamp_twist(0.1, 0.0, 0.2)
         self.assertFalse(clamped)
         self.assertEqual((lx, ly, az), (0.1, 0.0, 0.2))
+
+    def test_nan_becomes_zero(self) -> None:
+        lx, ly, az, clamped = clamp_twist(float("nan"), float("nan"), float("nan"))
+        self.assertTrue(clamped)
+        self.assertEqual((lx, ly, az), (0.0, 0.0, 0.0))
+
+
+class TestWatchdogTimeout(unittest.TestCase):
+    def test_rejects_non_positive_and_non_finite(self) -> None:
+        for bad in (0.0, -0.1, float("nan"), float("inf"), float("-inf")):
+            with self.assertRaises(ValueError):
+                require_positive_finite_timeout(bad)
+        self.assertEqual(require_positive_finite_timeout(0.3), 0.3)
 
 
 class TestDomainGuard(unittest.TestCase):

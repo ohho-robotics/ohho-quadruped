@@ -1,8 +1,11 @@
 """
 Launch robot_state_publisher and RViz for the Go2 description.
 
-Sim only, no gait controller. /joint_states come from ohho_go2_bridge, or from
-joint_state_publisher / joint_state_publisher_gui when the bridge is off.
+Sim only, no gait controller. robot_state_publisher listens on /joint_states.
+ohho_go2_bridge declares that topic but does not publish samples. The sim-only
+sensor node in ohho_go2_navigation publishes it in Nav2 launches. Set
+use_bridge_joint_states:=false for offline joint states, and
+use_joint_state_publisher_gui:=true for the slider GUI.
 """
 
 from __future__ import annotations
@@ -11,9 +14,9 @@ from pathlib import Path
 
 from ament_index_python.packages import PackageNotFoundError, get_package_share_directory
 from launch import LaunchDescription
-from launch.actions import DeclareLaunchArgument
+from launch.actions import DeclareLaunchArgument, OpaqueFunction
 from launch.conditions import IfCondition
-from launch.substitutions import Command, LaunchConfiguration, PythonExpression
+from launch.substitutions import LaunchConfiguration, PythonExpression
 from launch_ros.actions import Node
 from launch_ros.parameter_descriptions import ParameterValue
 
@@ -36,7 +39,6 @@ def generate_launch_description() -> LaunchDescription:
     use_jsp_gui = LaunchConfiguration("use_joint_state_publisher_gui")
     rviz = LaunchConfiguration("rviz")
     rviz_config = LaunchConfiguration("rviz_config")
-    urdf_file = LaunchConfiguration("urdf_file")
 
     urdf_arg = DeclareLaunchArgument(
         "urdf_file",
@@ -51,7 +53,12 @@ def generate_launch_description() -> LaunchDescription:
     bridge_joints_arg = DeclareLaunchArgument(
         "use_bridge_joint_states",
         default_value="true",
-        description="Expect /joint_states from ohho_go2_bridge; false for offline JSP",
+        description=(
+            "If true, do not start joint_state_publisher_gui. /joint_states must come "
+            "from another node. ohho_go2_bridge does not publish samples; the "
+            "sim-only sensor node in ohho_go2_navigation does in Nav2 launches. "
+            "Set false for offline joint sliders."
+        ),
     )
     jsp_gui_arg = DeclareLaunchArgument(
         "use_joint_state_publisher_gui",
@@ -72,27 +79,29 @@ def generate_launch_description() -> LaunchDescription:
         description="Path to RViz configuration file",
     )
 
-    # Use Command substitution so urdf_file can be overridden at runtime
-    robot_description = ParameterValue(
-        Command(["cat ", urdf_file]),
-        value_type=str,
-    )
+    # Read the URDF in Python so a path that contains spaces stays one path.
+    # Humble's Command substitution splits an unquoted path on whitespace.
+    def _robot_state_publisher(context, *_args, **_kwargs):
+        urdf_path = LaunchConfiguration("urdf_file").perform(context)
+        robot_description = Path(urdf_path).read_text(encoding="utf-8")
+        return [
+            Node(
+                package="robot_state_publisher",
+                executable="robot_state_publisher",
+                name="robot_state_publisher",
+                output="screen",
+                parameters=[
+                    {
+                        "robot_description": ParameterValue(
+                            robot_description, value_type=str
+                        ),
+                        "use_sim_time": LaunchConfiguration("use_sim_time"),
+                    }
+                ],
+            )
+        ]
 
-    # robot_state_publisher receives /joint_states from ohho_go2_bridge
-    robot_state_pub_node = Node(
-        package="robot_state_publisher",
-        executable="robot_state_publisher",
-        name="robot_state_publisher",
-        output="screen",
-        parameters=[
-            {
-                "robot_description": robot_description,
-                "use_sim_time": use_sim_time,
-            }
-        ],
-    )
-
-    # Offline fallback if bridge is not publishing /joint_states.
+    # Offline fallback when no other node publishes /joint_states.
     # The GUI publisher is optional and is not started together with the plain one.
     offline_plain = IfCondition(
         PythonExpression(
@@ -151,7 +160,7 @@ def generate_launch_description() -> LaunchDescription:
             jsp_gui_arg,
             rviz_arg,
             rviz_config_arg,
-            robot_state_pub_node,
+            OpaqueFunction(function=_robot_state_publisher),
             joint_state_pub_node,
             joint_state_pub_gui_node,
             rviz_node,

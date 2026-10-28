@@ -45,6 +45,9 @@ class TestNavSimLaunch(unittest.TestCase):
         self.assertNotIn("publish_sim_sensors", text)
         self.assertIn("slam_toolbox", text)
         self.assertIn("nav2.launch.py", text)
+        self.assertIn("ROS_DOMAIN_ID=0 is not allowed for simulation", text)
+        self.assertIn("go2_description URDF not found", text)
+        self.assertIn("sim/run_go2.py", text)
 
     def test_nav2_launch_syntax(self) -> None:
         launch_file = _NAV_DIR / "launch" / "nav2.launch.py"
@@ -55,6 +58,19 @@ class TestNavSimLaunch(unittest.TestCase):
         self.assertIn("planner_server", text)
         self.assertIn("bt_navigator", text)
         self.assertIn("lifecycle_manager_navigation", text)
+
+    def test_nav2_ci_bounds_smoke_and_lifecycle_queries(self) -> None:
+        workflow = (_REPO_ROOT / ".github" / "workflows" / "ros2-nav2.yml").read_text(
+            encoding="utf-8"
+        )
+        self.assertIn("persist-credentials: false", workflow)
+        self.assertNotIn("sleep 5", workflow)
+        script = (_REPO_ROOT / "scripts" / "ci" / "run-nav2-headless-test.sh").read_text(
+            encoding="utf-8"
+        )
+        self.assertIn("ros2 lifecycle get", script)
+        self.assertIn("timeout", script)
+        self.assertIn("deadline", script)
 
     def test_slam_launch_syntax(self) -> None:
         launch_file = _NAV_DIR / "launch" / "slam.launch.py"
